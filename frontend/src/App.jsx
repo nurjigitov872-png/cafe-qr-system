@@ -1,0 +1,28 @@
+import React from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+import MenuPage from "./pages/MenuPage";
+import SuccessPage from "./pages/SuccessPage";
+import MyOrderPage from "./pages/MyOrderPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminOrders from "./pages/AdminOrders";
+import AdminProducts from "./pages/AdminProducts";
+import AdminKitchen from "./pages/AdminKitchen";
+import AdminWaiter from "./pages/AdminWaiter";
+import AdminTables from "./pages/AdminTables";
+export default function App(){ return <Routes>
+  <Route path="/" element={<Navigate to="/table/1" replace />} />
+  <Route path="/table/:tableId" element={<MenuPage />} />
+  <Route path="/success" element={<SuccessPage />} />
+  <Route path="/payment-success" element={<PaymentSuccessPage />} />
+  <Route path="/my-order/:orderId" element={<MyOrderPage />} />
+  <Route path="/admin/login" element={<AdminLogin />} />
+  <Route path="/admin/dashboard" element={<AdminDashboard />} />
+  <Route path="/admin/orders" element={<AdminOrders />} />
+  <Route path="/admin/products" element={<AdminProducts />} />
+  <Route path="/admin/kitchen" element={<AdminKitchen />} />
+  <Route path="/admin/waiter" element={<AdminWaiter />} />
+  <Route path="/admin/tables" element={<AdminTables />} />
+  
+</Routes>; }
