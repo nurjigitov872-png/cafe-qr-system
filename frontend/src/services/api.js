@@ -1,5 +1,5 @@
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://cafe-qr-system.onrender.com/api";
+  import.meta.env.VITE_API_URL || "https://cafe-backend-weo1.onrender.com/api";
 
 const parseResponse = async (res) => {
   const data = await res.json().catch(() => ({}));
