@@ -53,6 +53,18 @@ export const createOrder = async (orderData) => {
   return parseResponse(res);
 };
 
+export const submitOrder = async (order) => {
+  const res = await fetch(`${API_URL}/orders`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(order),
+  });
+
+  return parseResponse(res);
+};
+
 export const getOrderById = async (id) => {
   const res = await fetch(`${API_URL}/orders/${id}`);
   return parseResponse(res);
@@ -178,17 +190,6 @@ export const updateProduct = async (id, payload) => {
   });
 
   return parseResponse(res);
-};
-export const submitOrder = async (order) => {
-  const res = await fetch(`${API}/orders`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(order),
-  });
-
-  return res.json();
 };
 
 export const deleteProduct = async (id) => {
