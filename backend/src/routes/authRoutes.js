@@ -1,39 +1,24 @@
-console.log("AUTH ROUTE LOADED");
-const express = require("express");
-const jwt = require("jsonwebtoken");
-const auth = require("../middleware/auth");
-
+import express from "express";
 const router = express.Router();
 
-router.post("/login", async (req, res) => {
+router.post("/login", (req, res) => {
   const { username, password } = req.body;
 
-  
-  console.log("LOGIN DEBUG:", {
-    inputUsername: username,
-    inputPassword: password,
-    envUsername: process.env.ADMIN_USERNAME,
-    envPassword: process.env.ADMIN_PASSWORD,
-    usernameMatch: username === process.env.ADMIN_USERNAME,
-    passwordMatch: password === process.env.ADMIN_PASSWORD,
-  });
-
+  // 🔥 ENV менен текшерүү
   if (
-    username !== process.env.ADMIN_USERNAME ||
-    password !== process.env.ADMIN_PASSWORD
+    username === process.env.ADMIN_USERNAME &&
+    password === process.env.ADMIN_PASSWORD
   ) {
-    return res.status(401).json({ message: "Логин же пароль ката" });
+    return res.json({
+      success: true,
+      message: "Login successful",
+    });
   }
 
-  const token = jwt.sign({ username }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
+  return res.status(401).json({
+    success: false,
+    message: "Логин же пароль туура эмес",
   });
-
-  res.json({ token, admin: { username } });
 });
 
-router.get("/me", auth, async (req, res) => {
-  res.json({ username: req.admin.username });
-});
-
-module.exports = router;
+export default router;
