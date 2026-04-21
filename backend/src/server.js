@@ -23,6 +23,7 @@ const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true,
   },
 });
 
@@ -30,9 +31,13 @@ app.set("io", io);
 
 app.use(
   cors({
-    origin(origin, callback) {
+    origin: function (origin, callback) {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
       return callback(new Error("CORS not allowed"));
     },
     credentials: true,
@@ -40,9 +45,13 @@ app.use(
 );
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
-  res.json({ message: "Cafe QR backend is running" });
+  res.status(200).json({
+    success: true,
+    message: "Cafe QR backend is running",
+  });
 });
 
 app.use("/api/auth", authRoutes);
@@ -52,16 +61,24 @@ app.use("/api/waiter-calls", waiterCallRoutes);
 
 io.on("connection", (socket) => {
   console.log("Socket connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected:", socket.id);
+  });
 });
+
+const PORT = process.env.PORT || 10000;
 
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected");
-    server.listen(process.env.PORT || 10000, () => {
-      console.log(`Server running on port ${process.env.PORT || 10000}`);
+
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
     console.error("MongoDB error:", err.message);
+    process.exit(1);
   });
