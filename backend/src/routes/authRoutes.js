@@ -10,21 +10,29 @@ router.post("/login", async (req, res) => {
 
   const envUsername = String(process.env.ADMIN_USERNAME || "").trim();
   const envPassword = String(process.env.ADMIN_PASSWORD || "").trim();
-  const jwtSecret = String(process.env.JWT_SECRET || "").trim();
 
-  console.log("===== ADMIN LOGIN DEBUG =====");
-  console.log("BODY username:", username);
-  console.log("BODY password:", password);
-  console.log("ENV ADMIN_USERNAME:", envUsername);
-  console.log("ENV ADMIN_PASSWORD:", envPassword);
-  console.log("JWT exists:", !!jwtSecret);
-  console.log("=============================");
+  console.log("LOGIN DEBUG:", {
+    enteredUsername: username,
+    enteredPasswordLength: password.length,
+    envUsername,
+    envPasswordLength: envPassword.length,
+    usernameMatch: username === envUsername,
+    passwordMatch: password === envPassword,
+  });
 
   if (username !== envUsername || password !== envPassword) {
-    return res.status(401).json({ message: "Логин же пароль ката" });
+    return res.status(401).json({
+      message: "Логин же пароль ката",
+      debug: {
+        usernameMatch: username === envUsername,
+        passwordMatch: password === envPassword,
+        enteredPasswordLength: password.length,
+        envPasswordLength: envPassword.length,
+      },
+    });
   }
 
-  const token = jwt.sign({ username }, jwtSecret, {
+  const token = jwt.sign({ username }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
 
