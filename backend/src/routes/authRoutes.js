@@ -1,3 +1,4 @@
+console.log("AUTH ROUTE LOADED");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth");
@@ -7,6 +8,7 @@ const router = express.Router();
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
+  
   console.log("LOGIN DEBUG:", {
     inputUsername: username,
     inputPassword: password,
