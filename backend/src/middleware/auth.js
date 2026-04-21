@@ -1,19 +1,24 @@
-const jwt = require("jsonwebtoken");
+import express from "express";
+const router = express.Router();
 
-module.exports = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+router.post("/login", (req, res) => {
+  const { username, password } = req.body;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Unauthorized" });
+  // 🔥 ENV менен текшерүү
+  if (
+    username === process.env.ADMIN_USERNAME &&
+    password === process.env.ADMIN_PASSWORD
+  ) {
+    return res.json({
+      success: true,
+      message: "Login successful",
+    });
   }
 
-  const token = authHeader.split(" ")[1];
+  return res.status(401).json({
+    success: false,
+    message: "Логин же пароль туура эмес",
+  });
+});
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.admin = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
-  }
-};
+export default router;
