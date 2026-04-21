@@ -10,17 +10,21 @@ router.post("/login", async (req, res) => {
 
   const envUsername = String(process.env.ADMIN_USERNAME || "").trim();
   const envPassword = String(process.env.ADMIN_PASSWORD || "").trim();
+  const jwtSecret = String(process.env.JWT_SECRET || "").trim();
 
-  console.log("LOGIN BODY USERNAME:", username);
-  console.log("LOGIN BODY PASSWORD:", password);
+  console.log("===== ADMIN LOGIN DEBUG =====");
+  console.log("BODY username:", username);
+  console.log("BODY password:", password);
   console.log("ENV ADMIN_USERNAME:", envUsername);
   console.log("ENV ADMIN_PASSWORD:", envPassword);
+  console.log("JWT exists:", !!jwtSecret);
+  console.log("=============================");
 
   if (username !== envUsername || password !== envPassword) {
     return res.status(401).json({ message: "Логин же пароль ката" });
   }
 
-  const token = jwt.sign({ username }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ username }, jwtSecret, {
     expiresIn: "7d",
   });
 
