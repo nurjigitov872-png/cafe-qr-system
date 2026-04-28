@@ -1,60 +1,66 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("admin");
+  const [password, setPassword] = useState("123456");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const login = async () => {
+  const login = async (e) => {
+    e.preventDefault();
+
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username: username,
-            password: password,
-          }),
-        }
-      );
+      setLoading(true);
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
       const data = await res.json();
 
-      if (data.success) {
-        localStorage.setItem("admin", "true");
-        window.location.href = "/admin/dashboard";
-      } else {
-        alert(data.message);
+      if (!res.ok || !data.token) {
+        alert(data.message || "Логин же пароль туура эмес");
+        return;
       }
-    } catch (err) {
-      alert("Server error");
+
+      localStorage.setItem("admin_token", data.token);
+      localStorage.setItem("admin", JSON.stringify(data.admin));
+
+      navigate("/admin/dashboard", { replace: true });
+    } catch (error) {
+      alert("Серверге туташуу катасы");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: "40px" }}>
-      <h1>Admin Login</h1>
+    <div className="center-page">
+      <form className="card auth-card" onSubmit={login}>
+        <h1>Admin Login</h1>
 
-      <input
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
+        <input
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Username"
+        />
 
-      <br /><br />
+        <input
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          type="password"
+        />
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      <br /><br />
-
-      <button onClick={login}>Login</button>
+        <button className="submit-btn" disabled={loading}>
+          {loading ? "Кирип жатат..." : "Кирүү"}
+        </button>
+      </form>
     </div>
   );
 }
