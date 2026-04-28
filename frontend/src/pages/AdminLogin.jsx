@@ -1,49 +1,60 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { loginAdmin } from "../services/api";
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("123456");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const login = async () => {
     try {
-      setLoading(true);
-      const data = await loginAdmin(username, password);
-      localStorage.setItem("admin_token", data.token);
-      navigate("/admin/dashboard");
-    } catch (e) {
-      alert(e.message);
-    } finally {
-      setLoading(false);
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username,
+            password: password,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        localStorage.setItem("admin", "true");
+        window.location.href = "/admin/dashboard";
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      alert("Server error");
     }
   };
 
   return (
-    <div className="center-page">
-      <form className="card auth-card" onSubmit={submit}>
-        <h1>Admin Login</h1>
+    <div style={{ padding: "40px" }}>
+      <h1>Admin Login</h1>
 
-        <input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
-        />
+      <input
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
 
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          type="password"
-        />
+      <br /><br />
 
-        <button className="submit-btn" disabled={loading}>
-          {loading ? "Кирип жатат..." : "Кирүү"}
-        </button>
-      </form>
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <br /><br />
+
+      <button onClick={login}>Login</button>
     </div>
   );
 }
