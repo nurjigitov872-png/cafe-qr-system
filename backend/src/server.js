@@ -19,16 +19,6 @@ const allowedOrigins = [
   "http://localhost:5173",
 ].filter(Boolean);
 
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    credentials: true,
-  },
-});
-
-app.set("io", io);
-
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -47,8 +37,18 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true,
+  },
+});
+
+app.set("io", io);
+
 app.get("/", (req, res) => {
-  res.status(200).json({
+  res.json({
     success: true,
     message: "Cafe QR backend is running",
   });

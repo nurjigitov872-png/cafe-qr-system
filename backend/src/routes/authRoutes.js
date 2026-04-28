@@ -1,17 +1,26 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
+
 const router = express.Router();
 
 router.post("/login", (req, res) => {
-  const { username, password } = req.body;
+  const username = String(req.body.username || "").trim();
+  const password = String(req.body.password || "").trim();
 
-  if (
-    username === process.env.ADMIN_USERNAME &&
-    password === process.env.ADMIN_PASSWORD
-  ) {
-    return res.status(200).json({
+  const envUser = String(process.env.ADMIN_USERNAME || "").trim();
+  const envPass = String(process.env.ADMIN_PASSWORD || "").trim();
+
+  if (username === envUser && password === envPass) {
+    const token = jwt.sign(
+      { username },
+      process.env.JWT_SECRET || "secret",
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
       success: true,
-      message: "Login successful",
-      username,
+      token,
+      admin: { username },
     });
   }
 
