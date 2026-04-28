@@ -1,14 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchMe } from "../services/api";
 
-export const useAdminAuth = () => {
+export default function useAdminAuth() {
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchMe().catch(() => {
-      localStorage.removeItem("admin_token");
-      navigate("/admin/login");
-    });
+    const token = localStorage.getItem("admin_token");
+
+    if (!token) {
+      navigate("/admin/login", { replace: true });
+    }
+
+    setLoading(false);
   }, [navigate]);
-};
+
+  return { loading };
+}
