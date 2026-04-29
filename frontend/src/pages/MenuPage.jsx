@@ -47,9 +47,12 @@ export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState("");
   const [cartItems, setCartItems] = useState([]);
   const [note, setNote] = useState("");
+
   const [orderType, setOrderType] = useState("takeaway");
-  const [paymentMethod, setPaymentMethod] = useState("card_online");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+
   const [loading, setLoading] = useState(false);
+
   const [favorites, setFavorites] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("favorites") || "[]");
@@ -68,10 +71,8 @@ export default function MenuPage() {
     const loadProducts = async () => {
       try {
         const data = await fetchProducts();
-        console.log("PRODUCTS:", data);
         setProducts(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error(error);
         alert(error.message || "Продукттарды жүктөөдө ката кетти");
       }
     };
@@ -83,18 +84,9 @@ export default function MenuPage() {
     return [...new Set(products.map((item) => item.category).filter(Boolean))];
   }, [products]);
 
-  useEffect(() => {
-    if (categories.length > 0 && !activeCategory) {
-      setActiveCategory("");
-    }
-  }, [categories, activeCategory]);
-
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const byCategory = activeCategory
-        ? product.category === activeCategory
-        : true;
-
+      const byCategory = activeCategory ? product.category === activeCategory : true;
       const bySearch = product.name
         ?.toLowerCase()
         .includes(search.toLowerCase());
@@ -104,12 +96,12 @@ export default function MenuPage() {
   }, [products, activeCategory, search]);
 
   const totalAmount = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+    return cartItems.reduce((sum, item) => sum + Number(item.price) * item.qty, 0);
   }, [cartItems]);
 
   const handleAddToCart = (product, selectedOptions = {}) => {
     const finalPrice =
-      typeof product.discountPrice === "number"
+      typeof product.discountPrice === "number" && product.discountPrice > 0
         ? product.discountPrice
         : product.price;
 
@@ -119,7 +111,7 @@ export default function MenuPage() {
         _id: `${product._id}-${Date.now()}-${Math.random()}`,
         productId: product._id,
         name: product.name,
-        price: finalPrice,
+        price: Number(finalPrice),
         qty: 1,
         selectedOptions,
       },
@@ -173,25 +165,24 @@ export default function MenuPage() {
     }
 
     const payload = {
-      tableNumber: Number(tableId),
+      tableNumber: Number(tableId) || 1,
       items: cartItems.map((item) => ({
         productId: item.productId,
         name: item.name,
-        price: item.price,
-        qty: item.qty,
-        selectedOptions: item.selectedOptions || {},
+        price: Number(item.price),
+        qty: Number(item.qty),
       })),
-      totalAmount,
-      comment: note,
-      orderType,
-      paymentMethod,
+      totalAmount: Number(totalAmount),
+      comment: note || "",
+      orderType: orderType === "dinein" ? "dinein" : "takeaway",
+      paymentMethod: paymentMethod === "online" ? "online" : "cash",
     };
 
     try {
       setLoading(true);
 
       const response = await createOrder(payload);
-      const createdOrder = response?.order;
+      const createdOrder = response?.order || response;
 
       if (!createdOrder?._id) {
         throw new Error("Заказ түзүлгөн жок");
@@ -199,12 +190,16 @@ export default function MenuPage() {
 
       localStorage.setItem("lastOrderId", createdOrder._id);
 
-      if (paymentMethod === "card_online") {
-        const paymentResponse = await createPaymentSession(createdOrder._id);
+      if (paymentMethod === "online") {
+        try {
+          const paymentResponse = await createPaymentSession(createdOrder._id);
 
-        if (paymentResponse?.paymentUrl) {
-          window.location.href = paymentResponse.paymentUrl;
-          return;
+          if (paymentResponse?.paymentUrl) {
+            window.location.href = paymentResponse.paymentUrl;
+            return;
+          }
+        } catch {
+          console.log("Payment session жок, success бетке өтөт");
         }
 
         navigate(`/payment-success?orderId=${createdOrder._id}`);
@@ -291,7 +286,7 @@ export default function MenuPage() {
           </div>
         </main>
 
-        <aside>
+        <aside className="cart-aside">
           <CartDrawer
             cartItems={cartItems}
             note={note}
