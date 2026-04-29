@@ -4,24 +4,45 @@ const Order = require("../models/Order");
 
 router.get("/dashboard/stats", async (req, res) => {
   try {
-    const orders = await Order.find();
+    const orders = await Order.find().sort({ createdAt: -1 });
 
-    const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, order) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayOrders = orders.filter((o) => new Date(o.createdAt) >= today);
+
+    const todayRevenue = todayOrders.reduce((sum, order) => {
       if (order.status !== "cancelled") return sum + Number(order.totalAmount || 0);
       return sum;
     }, 0);
 
-    const pendingOrders = orders.filter((o) => o.status === "pending").length;
-    const preparingOrders = orders.filter((o) => o.status === "preparing").length;
-    const readyOrders = orders.filter((o) => o.status === "ready").length;
+    const totalByStatus = {
+      pending: orders.filter((o) => o.status === "pending").length,
+      preparing: orders.filter((o) => o.status === "preparing").length,
+      ready: orders.filter((o) => o.status === "ready").length,
+      served: orders.filter((o) => o.status === "served").length,
+      cancelled: orders.filter((o) => o.status === "cancelled").length,
+    };
+
+    const productMap = {};
+
+    orders.forEach((order) => {
+      order.items.forEach((item) => {
+        if (!productMap[item.name]) productMap[item.name] = 0;
+        productMap[item.name] += Number(item.qty || 0);
+      });
+    });
+
+    const popularProducts = Object.entries(productMap)
+      .map(([name, qty]) => ({ name, qty }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 10);
 
     res.json({
-      totalOrders,
-      totalRevenue,
-      pendingOrders,
-      preparingOrders,
-      readyOrders,
+      todayOrdersCount: todayOrders.length,
+      todayRevenue,
+      totalByStatus,
+      popularProducts,
     });
   } catch (error) {
     res.status(500).json({ message: "Статистика алуу катасы" });
@@ -30,7 +51,10 @@ router.get("/dashboard/stats", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
+    const filter = {};
+    if (req.query.status) filter.status = req.query.status;
+
+    const orders = await Order.find(filter).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: "Заказдарды алуу катасы" });
@@ -40,11 +64,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({ message: "Заказ табылган жок" });
-    }
-
+    if (!order) return res.status(404).json({ message: "Заказ табылган жок" });
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: "Заказды алуу катасы" });
@@ -53,34 +73,66 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const order = new Order(req.body);
-    const savedOrder = await order.save();
+    const body = req.body;
+
+    const items = Array.isArray(body.items) ? body.items : [];
+
+    if (!items.length) {
+      return res.status(400).json({ message: "Корзина бош" });
+    }
+
+    const totalAmount =
+      Number(body.totalAmount) ||
+      items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+
+    const order = await Order.create({
+      tableNumber: Number(body.tableNumber) || 1,
+      items: items.map((item) => ({
+        productId: item.productId || item._id || undefined,
+        name: item.name,
+        price: Number(item.price) || 0,
+        qty: Number(item.qty) || 1,
+        selectedOptions: item.selectedOptions || {},
+      })),
+      comment: body.comment || "",
+      orderType: body.orderType || "dinein",
+      paymentMethod:
+        body.paymentMethod === "online" || body.paymentMethod === "card_online"
+          ? "online"
+          : "cash",
+      paymentStatus: "pending",
+      status: "pending",
+      totalAmount,
+    });
 
     const io = req.app.get("io");
-    if (io) io.emit("new-order", savedOrder);
+    if (io) {
+      io.emit("order:new", order);
+      io.emit("new-order", order);
+    }
 
-    res.status(201).json(savedOrder);
+    res.status(201).json({ success: true, order });
   } catch (error) {
-    res.status(500).json({ message: "Заказ түзүү катасы" });
+    console.error("ORDER CREATE ERROR:", error);
+    res.status(500).json({ message: error.message || "Заказ түзүү катасы" });
   }
 });
 
 router.patch("/:id/status", async (req, res) => {
   try {
-    const { status } = req.body;
-
     const order = await Order.findByIdAndUpdate(
       req.params.id,
-      { status },
+      { status: req.body.status },
       { new: true }
     );
 
-    if (!order) {
-      return res.status(404).json({ message: "Заказ табылган жок" });
-    }
+    if (!order) return res.status(404).json({ message: "Заказ табылган жок" });
 
     const io = req.app.get("io");
-    if (io) io.emit("order-updated", order);
+    if (io) {
+      io.emit("order:updated", order);
+      io.emit("order-updated", order);
+    }
 
     res.json(order);
   } catch (error) {
@@ -96,12 +148,13 @@ router.patch("/:id/cancel", async (req, res) => {
       { new: true }
     );
 
-    if (!order) {
-      return res.status(404).json({ message: "Заказ табылган жок" });
-    }
+    if (!order) return res.status(404).json({ message: "Заказ табылган жок" });
 
     const io = req.app.get("io");
-    if (io) io.emit("order-updated", order);
+    if (io) {
+      io.emit("order:updated", order);
+      io.emit("order-updated", order);
+    }
 
     res.json(order);
   } catch (error) {
