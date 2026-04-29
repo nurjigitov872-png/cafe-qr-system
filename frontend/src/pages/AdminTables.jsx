@@ -1,7 +1,7 @@
 import React from "react";
 import QRCode from "react-qr-code";
 import AdminLayout from "../components/AdminLayout";
-import { useAdminAuth } from "./useAdminAuth";
+import useAdminAuth from "./useAdminAuth";
 export default function AdminTables() {
   useAdminAuth();
   const tables = Array.from({ length:12 }, (_,i)=>i+1);

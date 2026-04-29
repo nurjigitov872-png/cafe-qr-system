@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { fetchDashboard } from "../services/api";
-import { useAdminAuth } from "./useAdminAuth";
+import useAdminAuth from "./useAdminAuth";
 export default function AdminDashboard() {
   useAdminAuth();
   const [data, setData] = useState(null);

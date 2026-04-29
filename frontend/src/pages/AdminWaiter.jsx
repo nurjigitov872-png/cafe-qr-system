@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { completeWaiterCall, fetchOrders, fetchWaiterCalls } from "../services/api";
 import { socket } from "../services/socket";
-import { useAdminAuth } from "./useAdminAuth";
+import useAdminAuth from "./useAdminAuth";
 export default function AdminWaiter() {
   useAdminAuth();
   const [calls, setCalls] = useState([]);

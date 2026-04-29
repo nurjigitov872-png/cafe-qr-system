@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { createProduct, deleteProduct, fetchProducts, updateProduct } from "../services/api";
-import { useAdminAuth } from "./useAdminAuth";
+import useAdminAuth from "./useAdminAuth";
 const emptyForm = { name:"", category:"Coffee", price:100, image:"", description:"", available:true, hidden:false, popular:false, discountPrice:"", optionsText:"" };
 export default function AdminProducts() {
   useAdminAuth();

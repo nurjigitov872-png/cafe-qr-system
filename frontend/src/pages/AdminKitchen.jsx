@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { fetchOrders, updateOrderStatus } from "../services/api";
 import { socket } from "../services/socket";
-import { useAdminAuth } from "./useAdminAuth";
+import useAdminAuth from "./useAdminAuth";
 export default function AdminKitchen() {
   useAdminAuth();
   const [orders, setOrders] = useState([]);
