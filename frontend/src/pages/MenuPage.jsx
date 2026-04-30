@@ -18,6 +18,7 @@ const translations = {
     myOrder: "Менин заказым",
     waiterSuccess: "Официант чакырылды",
     emptyCart: "Корзина бош",
+    add: "Кошуу",
   },
   RU: {
     title: "Выберите блюда и отправьте заказ",
@@ -26,6 +27,7 @@ const translations = {
     myOrder: "Мой заказ",
     waiterSuccess: "Официант вызван",
     emptyCart: "Корзина пуста",
+    add: "Добавить",
   },
   EN: {
     title: "Choose dishes and place your order",
@@ -34,6 +36,7 @@ const translations = {
     myOrder: "My order",
     waiterSuccess: "Waiter called",
     emptyCart: "Cart is empty",
+    add: "Add",
   },
 };
 
@@ -47,11 +50,10 @@ export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState("");
   const [cartItems, setCartItems] = useState([]);
   const [note, setNote] = useState("");
-
   const [orderType, setOrderType] = useState("takeaway");
   const [paymentMethod, setPaymentMethod] = useState("cash");
-
   const [loading, setLoading] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
 
   const [favorites, setFavorites] = useState(() => {
     try {
@@ -87,10 +89,7 @@ export default function MenuPage() {
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const byCategory = activeCategory ? product.category === activeCategory : true;
-      const bySearch = product.name
-        ?.toLowerCase()
-        .includes(search.toLowerCase());
-
+      const bySearch = product.name?.toLowerCase().includes(search.toLowerCase());
       return byCategory && bySearch;
     });
   }, [products, activeCategory, search]);
@@ -120,18 +119,14 @@ export default function MenuPage() {
 
   const handleIncrease = (id) => {
     setCartItems((prev) =>
-      prev.map((item) =>
-        item._id === id ? { ...item, qty: item.qty + 1 } : item
-      )
+      prev.map((item) => (item._id === id ? { ...item, qty: item.qty + 1 } : item))
     );
   };
 
   const handleDecrease = (id) => {
     setCartItems((prev) =>
       prev
-        .map((item) =>
-          item._id === id ? { ...item, qty: item.qty - 1 } : item
-        )
+        .map((item) => (item._id === id ? { ...item, qty: item.qty - 1 } : item))
         .filter((item) => item.qty > 0)
     );
   };
@@ -189,17 +184,17 @@ export default function MenuPage() {
       }
 
       localStorage.setItem("lastOrderId", createdOrder._id);
+      setCartOpen(false);
 
       if (paymentMethod === "online") {
         try {
           const paymentResponse = await createPaymentSession(createdOrder._id);
-
           if (paymentResponse?.paymentUrl) {
             window.location.href = paymentResponse.paymentUrl;
             return;
           }
         } catch {
-          console.log("Payment session жок, success бетке өтөт");
+          console.log("Payment session жок");
         }
 
         navigate(`/payment-success?orderId=${createdOrder._id}`);
@@ -210,10 +205,7 @@ export default function MenuPage() {
       setNote("");
 
       navigate("/success", {
-        state: {
-          tableId,
-          orderId: createdOrder._id,
-        },
+        state: { tableId, orderId: createdOrder._id },
       });
     } catch (error) {
       alert(error.message || "Заказ жөнөтүүдө ката кетти");
@@ -286,7 +278,7 @@ export default function MenuPage() {
           </div>
         </main>
 
-        <aside className="cart-aside">
+        <aside className={`cart-aside ${cartOpen ? "open" : ""}`}>
           <CartDrawer
             cartItems={cartItems}
             note={note}
@@ -301,10 +293,15 @@ export default function MenuPage() {
             setOrderType={setOrderType}
             paymentMethod={paymentMethod}
             setPaymentMethod={setPaymentMethod}
-            t={t}
+            onClose={() => setCartOpen(false)}
           />
         </aside>
       </div>
+
+      <button className="mobile-cart-btn" onClick={() => setCartOpen(true)}>
+        🛒 Корзина {cartItems.length > 0 ? `(${cartItems.length})` : ""}
+        {totalAmount > 0 ? ` — ${totalAmount} сом` : ""}
+      </button>
     </div>
   );
 }

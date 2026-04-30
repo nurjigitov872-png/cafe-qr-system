@@ -14,9 +14,14 @@ export default function CartDrawer({
   setOrderType,
   paymentMethod,
   setPaymentMethod,
+  onClose,
 }) {
   return (
     <div className="cart-drawer">
+      <button type="button" className="cart-close-btn" onClick={onClose}>
+        ×
+      </button>
+
       <h2>🛒 Ваш заказ</h2>
 
       <div className="order-type">
