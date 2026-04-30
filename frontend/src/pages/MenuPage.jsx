@@ -298,10 +298,12 @@ export default function MenuPage() {
         </aside>
       </div>
 
-      <button className="mobile-cart-btn" onClick={() => setCartOpen(true)}>
-        🛒 Корзина {cartItems.length > 0 ? `(${cartItems.length})` : ""}
-        {totalAmount > 0 ? ` — ${totalAmount} сом` : ""}
-      </button>
+      {!cartOpen && (
+  <button className="mobile-cart-btn" onClick={() => setCartOpen(true)}>
+    🛒 Корзина {cartItems.length > 0 ? `(${cartItems.length})` : ""}
+    {totalAmount > 0 ? ` — ${totalAmount} сом` : ""}
+  </button>
+)}
     </div>
   );
 }

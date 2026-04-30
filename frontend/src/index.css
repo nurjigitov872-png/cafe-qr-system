@@ -2506,3 +2506,16 @@
     transform: translateY(0) scale(1);
   }
 }
+@media (max-width: 900px) {
+  .cart-aside.open .cart-drawer {
+    padding-bottom: 26px !important;
+  }
+
+  .cart-aside.open .submit-btn {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    width: 100%;
+    min-height: 58px;
+  }
+}
