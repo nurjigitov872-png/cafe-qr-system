@@ -12,7 +12,9 @@ router.get("/dashboard/stats", async (req, res) => {
     const todayOrders = orders.filter((o) => new Date(o.createdAt) >= today);
 
     const todayRevenue = todayOrders.reduce((sum, order) => {
-      if (order.status !== "cancelled") return sum + Number(order.totalAmount || 0);
+      if (order.status !== "cancelled") {
+        return sum + Number(order.totalAmount || 0);
+      }
       return sum;
     }, 0);
 
@@ -45,7 +47,8 @@ router.get("/dashboard/stats", async (req, res) => {
       popularProducts,
     });
   } catch (error) {
-    res.status(500).json({ message: "Статистика алуу катасы" });
+    console.error("DASHBOARD ERROR:", error.message);
+    res.status(500).json({ message: error.message || "Статистика алуу катасы" });
   }
 });
 
@@ -57,49 +60,56 @@ router.get("/", async (req, res) => {
     const orders = await Order.find(filter).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: "Заказдарды алуу катасы" });
+    console.error("GET ORDERS ERROR:", error.message);
+    res.status(500).json({ message: error.message || "Заказдарды алуу катасы" });
   }
 });
 
 router.get("/:id", async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: "Заказ табылган жок" });
+
+    if (!order) {
+      return res.status(404).json({ message: "Заказ табылган жок" });
+    }
+
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: "Заказды алуу катасы" });
+    console.error("GET ORDER ERROR:", error.message);
+    res.status(500).json({ message: error.message || "Заказды алуу катасы" });
   }
 });
 
 router.post("/", async (req, res) => {
   try {
-    const body = req.body;
-
+    const body = req.body || {};
     const items = Array.isArray(body.items) ? body.items : [];
 
     if (!items.length) {
       return res.status(400).json({ message: "Корзина бош" });
     }
 
+    const cleanItems = items.map((item) => ({
+      productId: item.productId || undefined,
+      name: String(item.name || "Товар"),
+      price: Number(item.price) || 0,
+      qty: Number(item.qty) || 1,
+      selectedOptions: item.selectedOptions || {},
+    }));
+
     const totalAmount =
       Number(body.totalAmount) ||
-      items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+      cleanItems.reduce((sum, item) => sum + item.price * item.qty, 0);
 
     const order = await Order.create({
       tableNumber: Number(body.tableNumber) || 1,
-      items: items.map((item) => ({
-        productId: item.productId || item._id || undefined,
-        name: item.name,
-        price: Number(item.price) || 0,
-        qty: Number(item.qty) || 1,
-        selectedOptions: item.selectedOptions || {},
-      })),
+      items: cleanItems,
       comment: body.comment || "",
-      orderType: body.orderType || "dinein",
-      paymentMethod:
-        body.paymentMethod === "online" || body.paymentMethod === "card_online"
-          ? "online"
-          : "cash",
+      orderType:
+        body.orderType === "takeaway" || body.orderType === "delivery"
+          ? body.orderType
+          : "dinein",
+      paymentMethod: body.paymentMethod === "online" ? "online" : "cash",
       paymentStatus: "pending",
       status: "pending",
       totalAmount,
@@ -113,20 +123,34 @@ router.post("/", async (req, res) => {
 
     res.status(201).json({ success: true, order });
   } catch (error) {
-    console.error("ORDER CREATE ERROR:", error);
+    console.error("ORDER CREATE ERROR:", error.message);
     res.status(500).json({ message: error.message || "Заказ түзүү катасы" });
   }
 });
 
 router.patch("/:id/status", async (req, res) => {
   try {
+    const allowedStatuses = [
+      "pending",
+      "preparing",
+      "ready",
+      "served",
+      "cancelled",
+    ];
+
+    const status = allowedStatuses.includes(req.body.status)
+      ? req.body.status
+      : "pending";
+
     const order = await Order.findByIdAndUpdate(
       req.params.id,
-      { status: req.body.status },
+      { status },
       { new: true }
     );
 
-    if (!order) return res.status(404).json({ message: "Заказ табылган жок" });
+    if (!order) {
+      return res.status(404).json({ message: "Заказ табылган жок" });
+    }
 
     const io = req.app.get("io");
     if (io) {
@@ -136,7 +160,8 @@ router.patch("/:id/status", async (req, res) => {
 
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: "Статус өзгөртүү катасы" });
+    console.error("ORDER STATUS ERROR:", error.message);
+    res.status(500).json({ message: error.message || "Статус өзгөртүү катасы" });
   }
 });
 
@@ -148,7 +173,9 @@ router.patch("/:id/cancel", async (req, res) => {
       { new: true }
     );
 
-    if (!order) return res.status(404).json({ message: "Заказ табылган жок" });
+    if (!order) {
+      return res.status(404).json({ message: "Заказ табылган жок" });
+    }
 
     const io = req.app.get("io");
     if (io) {
@@ -158,7 +185,8 @@ router.patch("/:id/cancel", async (req, res) => {
 
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: "Заказды отмена кылуу катасы" });
+    console.error("ORDER CANCEL ERROR:", error.message);
+    res.status(500).json({ message: error.message || "Заказды отмена кылуу катасы" });
   }
 });
 

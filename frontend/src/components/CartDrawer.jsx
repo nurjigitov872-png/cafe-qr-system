@@ -19,13 +19,11 @@ export default function CartDrawer({
     <div className="cart-drawer">
       <h2>🛒 Ваш заказ</h2>
 
-      {/* ORDER TYPE */}
       <div className="order-type">
         <label className={orderType === "dinein" ? "active" : ""}>
           <input
             type="radio"
             name="orderType"
-            value="dinein"
             checked={orderType === "dinein"}
             onChange={() => setOrderType("dinein")}
           />
@@ -36,7 +34,6 @@ export default function CartDrawer({
           <input
             type="radio"
             name="orderType"
-            value="takeaway"
             checked={orderType === "takeaway"}
             onChange={() => setOrderType("takeaway")}
           />
@@ -44,37 +41,32 @@ export default function CartDrawer({
         </label>
       </div>
 
-      {/* PAYMENT */}
       <div className="payment-methods">
         <label className={paymentMethod === "cash" ? "active" : ""}>
           <input
             type="radio"
             name="paymentMethod"
-            value="cash"
             checked={paymentMethod === "cash"}
             onChange={() => setPaymentMethod("cash")}
           />
           <span>💵 Наличными</span>
         </label>
 
-        <label className={paymentMethod === "card_online" ? "active" : ""}>
+        <label className={paymentMethod === "online" ? "active" : ""}>
           <input
             type="radio"
             name="paymentMethod"
-            value="card_online"
-            checked={paymentMethod === "card_online"}
-            onChange={() => setPaymentMethod("card_online")}
+            checked={paymentMethod === "online"}
+            onChange={() => setPaymentMethod("online")}
           />
           <span>💳 Онлайн оплата</span>
         </label>
       </div>
 
-      {/* EMPTY */}
       {cartItems.length === 0 ? (
         <p className="empty">Корзина пуста</p>
       ) : (
         <>
-          {/* ITEMS */}
           <div className="cart-list">
             {cartItems.map((item) => (
               <div className="cart-item" key={item._id}>
@@ -86,12 +78,17 @@ export default function CartDrawer({
                 </div>
 
                 <div className="qty-box">
-                  <button onClick={() => onDecrease(item._id)}>-</button>
+                  <button type="button" onClick={() => onDecrease(item._id)}>
+                    -
+                  </button>
                   <span>{item.qty}</span>
-                  <button onClick={() => onIncrease(item._id)}>+</button>
+                  <button type="button" onClick={() => onIncrease(item._id)}>
+                    +
+                  </button>
                 </div>
 
                 <button
+                  type="button"
                   className="remove-btn"
                   onClick={() => onRemove(item._id)}
                 >
@@ -101,18 +98,17 @@ export default function CartDrawer({
             ))}
           </div>
 
-          {/* NOTE */}
           <textarea
             placeholder="Комментарий к заказу..."
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
 
-          {/* TOTAL */}
           <div className="cart-bottom">
             <h3>{totalAmount} сом</h3>
 
             <button
+              type="button"
               className="submit-btn"
               onClick={onSubmit}
               disabled={loading}
