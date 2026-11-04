@@ -55,30 +55,90 @@ const sendTelegramMessage = async (text) => {
   }
 };
 
+// Keep notification formatting independent from the Telegram transport.
+// Plain text only: no parse_mode, so customer-supplied markup stays literal.
+const clipText = (value, max) => {
+  const text = String(value ?? "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "");
+  if (text.length <= max) return text;
+  let prefix = text.slice(0, Math.max(0, max - 1));
+  // Never cut between the two UTF-16 units of an emoji.
+  if (/[\uD800-\uDBFF]$/.test(prefix)) prefix = prefix.slice(0, -1);
+  return prefix + "…";
+};
+const fieldText = (value, max = 120) => clipText(String(value ?? "").replace(/\s+/g, " ").trim(), max);
+const formatNumber = value => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "0";
+  return Math.abs(number) >= 1e12 ? number.toExponential(2) : new Intl.NumberFormat("ky-KG", { maximumFractionDigits: 2 }).format(number);
+};
+const formatOrderTime = value => {
+  const date = value ? new Date(value) : null;
+  if (!date || !Number.isFinite(date.getTime())) return ["📅 Күнү: Көрсөтүлгөн эмес", "🕒 Убактысы: Көрсөтүлгөн эмес"];
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Bishkek", day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(date);
+  const get = type => parts.find(part => part.type === type).value;
+  return ["📅 Күнү: " + get("day") + "." + get("month") + "." + get("year"),
+    "🕒 Убактысы: " + get("hour") + ":" + get("minute") + " (Бишкек, UTC+6)"];
+};
+
+const formatOrderMessage = order => {
+  const statuses = {
+    pending: "🟡 Күтүлүүдө", preparing: "🔵 Даярдалууда", ready: "🟢 Даяр",
+    served: "✅ Берилди", cancelled: "🔴 Жокко чыгарылды",
+  };
+  const types = { dinein: "Залда", takeaway: "Алып кетүү", delivery: "Жеткирүү" };
+  const payments = { cash: "Накталай", online: "Онлайн", card_online: "Онлайн карта" };
+  const paymentStatuses = { pending: "Төлөнө элек", paid: "Төлөндү", failed: "Төлөм өтпөдү" };
+  const shortId = fieldText(String(order._id ?? "").slice(-6).toUpperCase(), 6) || "—";
+  const separator = "━━━━━━━━━━━━━━━━━━";
+  const items = Array.isArray(order.items) ? order.items : [];
+  const itemLines = [];
+  let used = 0;
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index];
+    const options = Object.entries(item.selectedOptions || {}).map(([key, value]) => fieldText(key, 40) + ": " + fieldText(value, 80)).join(", ");
+    const block = [
+      (index + 1) + ". " + (fieldText(item.name) || "Товар"),
+      "   " + formatNumber(item.qty) + " × " + formatNumber(item.price) + " сом = " + formatNumber(Number(item.price) * Number(item.qty)) + " сом",
+      ...(options ? ["   ▫ " + fieldText(options, 180)] : []),
+    ].join("\n");
+    // Reserve space for totals, payment information, and the comment.
+    if (used + block.length + 1 > 2000) {
+      itemLines.push("… Дагы " + (items.length - index) + " товар түрү бар.");
+      break;
+    }
+    itemLines.push(block);
+    used += block.length + 1;
+  }
+  const comment = clipText(String(order.comment ?? "").trim(), 600) || "Жок";
+  const lines = [
+    "🧾 ЖАҢЫ ЗАКАЗ · №" + shortId,
+    separator,
+    "Статус: " + (statuses[order.status] || "⚪ Белгисиз"),
+    "🪑 Стол: №" + (fieldText(order.tableNumber, 20) || "—"),
+    "🍽 Заказдын түрү: " + (types[order.orderType] || "Көрсөтүлгөн эмес"),
+    ...formatOrderTime(order.createdAt),
+    "", "🛒 ТОВАРЛАР", ...itemLines,
+    ...(items.length ? [] : ["Товарлар көрсөтүлгөн эмес"]),
+    "", separator,
+    "💰 ЖАЛПЫ: " + formatNumber(order.totalAmount) + " сом",
+    "💳 Төлөм ыкмасы: " + (payments[order.paymentMethod] || "Көрсөтүлгөн эмес"),
+    "Төлөм статусу: " + (paymentStatuses[order.paymentStatus] || "Көрсөтүлгөн эмес"),
+    "", "💬 Комментарий:", comment,
+  ];
+  // Conservative UTF-16 limit also fits Telegram's 4096-character plain-text limit.
+  return clipText(lines.join("\n"), 3900);
+};
+
 const sendOrderNotification = async (order) => {
   try {
-    const types = { dinein: "Залда", takeaway: "Алып кетүү", delivery: "Жеткирүү" };
-    const payments = { cash: "Накталай", online: "Онлайн", card_online: "Онлайн карта" };
-    const lines = [
-      "Жаңы заказ",
-      "Заказ: " + order._id,
-      "Стол: " + order.tableNumber,
-      "Түрү: " + (types[order.orderType] || order.orderType),
-      "Төлөм: " + (payments[order.paymentMethod] || order.paymentMethod),
-      "Төлөм статусу: " + order.paymentStatus,
-      "Жалпы: " + order.totalAmount + " сом",
-      "",
-      ...order.items.map((item) => {
-        const options = Object.entries(item.selectedOptions || {}).map(([key, value]) => key + ": " + String(value)).join(", ");
-        return item.name + " × " + item.qty + " = " + (item.price * item.qty) + " сом" + (options ? " (" + options + ")" : "");
-      }),
-      ...(order.comment ? ["", "Комментарий: " + order.comment] : []),
-    ];
-    return await sendTelegramMessage(lines.join("\n"));
+    return await sendTelegramMessage(formatOrderMessage(order));
   } catch (error) {
     reportTelegramError(error);
     return false;
   }
 };
 
-module.exports = { sendTelegramMessage, sendOrderNotification, checkTelegramConfig };
+module.exports = { sendTelegramMessage, sendOrderNotification, checkTelegramConfig, formatOrderMessage };

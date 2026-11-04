@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import AdminLayout from "../components/AdminLayout";
+import { DataNotice, EmptyState, Icon, RefreshButton } from "../components/AdminUI";
 import { completeWaiterCall, fetchOrders, fetchWaiterCalls } from "../services/api";
-import { socket } from "../services/socket";
-import useAdminAuth from "./useAdminAuth";
+import { formatDate } from "../utils/adminData";
+import useAdminData from "./useAdminData";
+const EVENTS = ["waiter:new", "waiter:updated", "waiter-call", "waiter-call-updated", "order:new", "order:updated"];
+const loader = async () => { const [calls, orders] = await Promise.all([fetchWaiterCalls(), fetchOrders()]); return { calls, orders }; };
 export default function AdminWaiter() {
-  useAdminAuth();
-  const [calls, setCalls] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const load = async () => { const [callsData, ordersData] = await Promise.all([fetchWaiterCalls(), fetchOrders()]); setCalls(callsData); setOrders(ordersData); };
-  useEffect(() => { load().catch((e) => alert(e.message)); }, []);
-  useEffect(() => { const handler = () => load(); ["waiter:new","waiter:updated","order:new","order:updated"].forEach((e)=>socket.on(e,handler)); return () => ["waiter:new","waiter:updated","order:new","order:updated"].forEach((e)=>socket.off(e,handler)); }, []);
-  const openTables = [...new Set(orders.filter((o)=>o.status!=="cancelled").map((o)=>o.tableNumber))];
-  return <AdminLayout title="Waiter"><div className="two-col-grid"><div className="card"><h3>Официант чакыруулар</h3><div className="list-box">{calls.map((call)=><div className="line-row" key={call._id}><div><b>Стол №{call.tableNumber}</b><div className="muted">{call.status}</div></div>{call.status==="pending" && <button className="small-btn" onClick={()=>completeWaiterCall(call._id).then(load)}>done</button>}</div>)}</div></div><div className="card"><h3>Ачык столдор</h3><div className="list-box">{openTables.map((table)=><div className="line-row" key={table}><span>Стол №{table}</span><strong>Активдүү</strong></div>)}</div></div></div></AdminLayout>;
+  const { data, loading, error, load } = useAdminData(loader, EVENTS);
+  const [busy, setBusy] = useState(""), [actionError, setActionError] = useState("");
+  const done = async id => { setBusy(id); setActionError(""); try { await completeWaiterCall(id); await load(); } catch { setActionError("Чакырууну жабуу мүмкүн болгон жок. Кайра аракет кылыңыз."); } finally { setBusy(""); } };
+  const tables = data ? [...new Set(data.orders.filter(order => ["pending", "preparing", "ready"].includes(order.status)).map(order => order.tableNumber))].sort((a,b) => a-b) : [];
+  return <AdminLayout title="Официанттар" subtitle="Кардарлардын чакыруулары жана тейлөөдөгү столдор." actions={<RefreshButton loading={loading} onClick={load} />}><DataNotice loading={loading} error={actionError || error} onRetry={() => { setActionError(""); load(); }} />{data && <div className="pos-two-columns"><section className="pos-panel"><div className="pos-panel-heading"><div><h2>Официант чакыруулар</h2><p>{data.calls.filter(call => call.status === "pending").length} чакыруу күтүлүүдө</p></div><Icon name="waiter" /></div>{data.calls.length ? [...data.calls].sort((a,b) => Number(b.status === "pending") - Number(a.status === "pending") || new Date(b.createdAt) - new Date(a.createdAt)).map(call => <div className="pos-waiter-row" key={call._id}><span className="pos-table-icon"><Icon name="waiter" /></span><div><strong>Стол №{call.tableNumber}</strong><small>{formatDate(call.createdAt)}</small><small>{call.status === "pending" ? "Тейлөө күтүлүүдө" : "Чакыруу аткарылды"}</small></div>{call.status === "pending" && <button className="pos-button pos-button--primary" disabled={!!busy} onClick={() => done(call._id)}><Icon name="check" size={16} />{busy === call._id ? "Сакталууда…" : "Аткарылды"}</button>}</div>) : <EmptyState icon="waiter" title="Чакыруу жок" detail="Кардар официант чакырганда ушул жерде көрсөтүлөт." />}</section><section className="pos-panel"><div className="pos-panel-heading"><div><h2>Тейлөөдөгү столдор</h2><p>Күтүлүүдө, даярдалууда жана даяр заказдар</p></div><Icon name="table" /></div>{tables.length ? <div className="pos-table-chips">{tables.map(table => <div className="pos-table-chip" key={table}><Icon name="table" size={25} /><strong>Стол №{table}</strong><small>Тейлөөдө</small></div>)}</div> : <EmptyState icon="table" title="Активдүү стол жок" />}</section></div>}</AdminLayout>;
 }
