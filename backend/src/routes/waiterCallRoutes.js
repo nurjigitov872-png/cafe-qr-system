@@ -22,8 +22,9 @@ router.post("/", async (req, res) => {
     });
 
     const io = req.app.get("io");
-    if (io) io.emit("waiter-call", call);
+    if (io) io.to(["admin", "waiter"]).emit("waiter-call", call);
 
+    await req.app.get("notifications")?.publish("waiter.called", call);
     res.status(201).json(call);
   } catch (error) {
     res.status(500).json({ message: "Официант чакыруу катасы" });
@@ -43,7 +44,7 @@ router.patch("/:id/done", requireAdmin, async (req, res) => {
     }
 
     const io = req.app.get("io");
-    if (io) io.emit("waiter-call-updated", call);
+    if (io) io.to(["admin", "waiter"]).emit("waiter-call-updated", call);
 
     res.json(call);
   } catch (error) {

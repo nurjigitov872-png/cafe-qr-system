@@ -1,3 +1,4 @@
+import { revokeCurrentPush } from "../notifications/client";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "./AdminUI";
@@ -33,7 +34,7 @@ export default function AdminLayout({ title, subtitle, actions, children }) {
     document.addEventListener("keydown", handle);
     return () => { document.body.style.overflow = previous; document.removeEventListener("keydown", handle); trigger.current?.focus(); };
   }, [open, mobile]);
-  const logout = () => { socket.disconnect(); localStorage.removeItem("admin_token"); localStorage.removeItem("admin"); navigate("/admin/login"); };
+  const logout = async () => { try { await revokeCurrentPush(localStorage.getItem("admin_token")); } catch {} socket.disconnect(); localStorage.removeItem("admin_token"); localStorage.removeItem("admin"); navigate("/admin/login"); };
   return <div className={"pos-admin" + (open ? " pos-menu-open" : "")}>
     <a className="pos-skip" href="#admin-main">Мазмунга өтүү</a>
     {open && mobile && <button className="pos-backdrop" aria-label="Менюну жабуу" onClick={() => setOpen(false)} tabIndex={-1} />}

@@ -2134,3 +2134,13 @@
     gap: 6px;
     margin-top: 15px;
 }
+/* Product translations use the existing Nordic palette. */
+.pos-language-tabs { display:flex; flex-wrap:wrap; gap:6px; margin:18px 0; }
+.pos-language-tabs button { display:flex; align-items:center; gap:8px; background:#191e25; color:#aab8ca; border:1px solid var(--pos-line); padding:10px 12px; border-radius:8px; font-size:12px; }
+.pos-language-tabs button[aria-selected="true"] { background:#203b2b; border-color:#3b6a4b; color:#91e5af; }
+.pos-language-tabs span { color:#8b9d91; font-size:11px; }
+.pos-option-translations { border:1px solid var(--pos-line); border-radius:10px; padding:14px; display:grid; gap:12px; min-width:0; }
+.pos-option-translations legend { color:var(--pos-muted); padding:0 6px; font-size:12px; }
+.pos-translation-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+.pos-translation-approval { display:flex; align-items:flex-start; gap:9px; color:#d0dccc; font-size:12px; margin-top:15px; }
+.pos-admin .pos-translation-approval input { width:18px; height:18px; min-height:0; flex-shrink:0; accent-color:var(--pos-green); }

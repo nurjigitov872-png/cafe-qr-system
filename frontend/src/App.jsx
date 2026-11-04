@@ -1,3 +1,5 @@
+import PushTestPage from "./pages/PushTestPage";
+import NotificationCenter from "./components/NotificationCenter";
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
@@ -22,13 +24,14 @@ function RequireAdmin({ children }) {
 
 export default function App() {
   return (
-    <Routes>
+    <><NotificationCenter /><Routes>
       <Route path="/" element={<Navigate to="/table/1" replace />} />
       <Route path="/table/:tableId" element={<MenuPage />} />
       <Route path="/success" element={<SuccessPage />} />
       <Route path="/payment-success" element={<PaymentSuccessPage />} />
       <Route path="/my-order/:orderId" element={<MyOrderPage />} />
 
+      <Route path="/admin/push-test" element={<RequireAdmin><PushTestPage /></RequireAdmin>} />
       <Route path="/admin/login" element={<AdminLogin />} />
 
       <Route
@@ -84,6 +87,6 @@ export default function App() {
           </RequireAdmin>
         }
       />
-    </Routes>
+    </Routes></>
   );
 }

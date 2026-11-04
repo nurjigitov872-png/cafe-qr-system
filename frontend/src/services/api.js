@@ -1,3 +1,4 @@
+import { emitOrderStatus } from "../notifications/events.js";
 const API_URL =
   import.meta.env.VITE_API_URL || "https://cafe-backend-weo1.onrender.com/api";
 
@@ -88,7 +89,7 @@ export const cancelOrder = async (id) => {
     headers: orderHeaders(id),
   });
 
-  return parseResponse(res);
+  return emitOrderStatus(await parseResponse(res));
 };
 
 export const loginAdmin = async (username, password) => {
@@ -133,7 +134,7 @@ export const updateOrderStatus = async (id, status) => {
     body: JSON.stringify({ status }),
   });
 
-  return parseResponse(res);
+  return emitOrderStatus(await parseResponse(res));
 };
 
 export const fetchDashboard = async () => {
@@ -225,5 +226,12 @@ export const createPaymentSession = async (orderId) => {
     body: JSON.stringify({ orderId }),
   });
 
+  return parseResponse(res);
+};
+export const updateProductTranslations = async (id, translations) => {
+  const res = await fetch(`${API_URL}/products/${id}/translations`, {
+    method: "PATCH", headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(translations),
+  });
   return parseResponse(res);
 };

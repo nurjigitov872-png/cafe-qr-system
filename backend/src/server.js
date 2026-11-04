@@ -27,7 +27,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const authRoutes = require("./routes/authRoutes");
 const waiterCallRoutes = require("./routes/waiterCallRoutes");
 
-const { getSecret, authenticateAdminSocket } = require("./middleware/auth");
+const { getSecret } = require("./middleware/auth");
 try { getSecret(); } catch {
   console.error("JWT_SECRET is required; backend startup refused.");
   process.exit(1);
@@ -68,7 +68,10 @@ const io = new Server(server, {
   },
 });
 
-io.use(authenticateAdminSocket);
+const { socketAuth, connectSocket } = require("./utils/notificationPolicy");
+const { createNotifications } = require("./utils/notifications");
+io.use(socketAuth);
+app.set("notifications", createNotifications(io));
 app.set("io", io);
 
 app.get("/", (req, res) => {
@@ -78,21 +81,13 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/waiter-calls", waiterCallRoutes);
 
-io.on("connection", (socket) => {
-  const expiryTimer = setTimeout(() => socket.disconnect(true), Math.max(0, socket.data.auth.exp * 1000 - Date.now()));
-  expiryTimer.unref();
-  console.log("Socket connected:", socket.id);
-
-  socket.on("disconnect", () => {
-    clearTimeout(expiryTimer);
-    console.log("Socket disconnected:", socket.id);
-  });
-});
+io.on("connection", connectSocket);
 
 const PORT = process.env.PORT || 10000;
 

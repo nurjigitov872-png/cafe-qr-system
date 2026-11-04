@@ -120,9 +120,11 @@ router.post("/", async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-      io.emit("order:new", order);
-      io.emit("new-order", order);
+      io.to(["admin", "kitchen", "waiter"]).emit("order:new", order);
+      io.to(["admin", "kitchen", "waiter"]).emit("new-order", order);
     }
+
+    await req.app.get("notifications")?.publish("order.new", order);
 
     // Notification failure must not turn a saved order into an HTTP error.
     await sendOrderNotification(order);
@@ -149,22 +151,26 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
       ? req.body.status
       : "pending";
 
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
+    // Atomic guard: retrying the same status must not emit a second notification.
+    const changed = await Order.findOneAndUpdate(
+      { _id: req.params.id, status: { $ne: status } },
       { status },
       { new: true }
     );
+    const order = changed || await Order.findById(req.params.id);
 
     if (!order) {
       return res.status(404).json({ message: "Заказ табылган жок" });
     }
 
+    if (!changed) return res.json(order);
     const io = req.app.get("io");
     if (io) {
-      io.emit("order:updated", order);
-      io.emit("order-updated", order);
+      io.to(["admin", "kitchen", "waiter"]).emit("order:updated", order);
+      io.to(["admin", "kitchen", "waiter"]).emit("order-updated", order);
     }
 
+    await req.app.get("notifications")?.publish("order.status", order);
     res.json(order);
   } catch (error) {
     console.error("ORDER STATUS ERROR:", error.message);
@@ -186,10 +192,11 @@ router.patch("/:id/cancel", requireOrderAccess, async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-      io.emit("order:updated", order);
-      io.emit("order-updated", order);
+      io.to(["admin", "kitchen", "waiter"]).emit("order:updated", order);
+      io.to(["admin", "kitchen", "waiter"]).emit("order-updated", order);
     }
 
+    await req.app.get("notifications")?.publish("order.status", order);
     res.json(order);
   } catch (error) {
     console.error("ORDER CANCEL ERROR:", error.message);

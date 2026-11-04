@@ -1,138 +1,70 @@
-import React, { useEffect, useState } from "react";
+import useCustomerPreferences from "../i18n/useCustomerPreferences";
+import { localizedField } from "../i18n/customer";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { cancelOrder, getOrderById } from "../services/api";
-
-export default function MyOrderPage() {
-  const { orderId } = useParams();
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [cancelLoading, setCancelLoading] = useState(false);
-
-  const loadOrder = async () => {
-    if (!orderId) return;
-
+import { CafeEmpty, CafeFrame, CafeIcon, CUSTOMER_STATUSES, CUSTOMER_PAYMENTS } from "../components/CustomerUI";
+import "../utils/customerData";
+export default function MyOrderPage({
+  orderIdOverride,
+  paymentReturn = false
+}) {
+  const {
+    t,
+    language,
+    theme,
+    money
+  } = useCustomerPreferences();
+  const {
+    orderId: routeId
+  } = useParams();
+  const orderId = orderIdOverride ?? routeId;
+  const [order, setOrder] = useState(null),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState(""),
+    [cancelLoading, setCancelLoading] = useState(false);
+  const load = useCallback(async () => {
+    if (!orderId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await getOrderById(orderId);
-      setOrder(data);
+      setOrder(await getOrderById(orderId));
+      setError("");
+    } catch {
+      setError("Заказды ачуу мүмкүн болгон жок. Бул заказ берилген браузерден ачып, кайра аракет кылыңыз.");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadOrder().catch((e) => alert(e.message));
   }, [orderId]);
-
-  const handleCancel = async () => {
+  useEffect(() => {
+    load();
+  }, [load]);
+  useEffect(() => {
+    const update = event => { if (event.detail?.orderId === orderId) setOrder(current => current ? { ...current, status:event.detail.status } : current); };
+    const refresh = () => { if (orderId) getOrderById(orderId).then(setOrder).catch(() => {}); };
+    window.addEventListener("cafe:order-status",update);window.addEventListener("cafe:order-refresh",refresh);
+    const timer=setInterval(refresh,30000);
+    return()=>{clearInterval(timer);window.removeEventListener("cafe:order-status",update);window.removeEventListener("cafe:order-refresh",refresh);};
+  },[orderId]);
+  const cancel = async () => {
+    if (!window.confirm(t("Бул заказды жокко чыгаргыңыз келеби?"))) return;
+    setCancelLoading(true);
     try {
-      setCancelLoading(true);
-      await cancelOrder(orderId);
-      await loadOrder();
-    } catch (e) {
-      alert(e.message);
+      const result = await cancelOrder(orderId);
+      setOrder(result);
+      await load();
+    } catch {
+      setError("Заказды жокко чыгаруу мүмкүн болгон жок. Официанттан тактап алыңыз.");
     } finally {
       setCancelLoading(false);
     }
   };
-
-  if (!orderId) {
-    return (
-      <div className="track-page">
-        <div className="track-card">
-          <h1>Менин заказым</h1>
-          <p>Акыркы заказ табылган жок</p>
-          <Link className="back-link" to="/table/1">
-            Менюга өтүү
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="track-page">
-        <div className="track-card">
-          <h1>Менин заказым</h1>
-          <p>Жүктөлүп жатат...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!order) {
-    return (
-      <div className="track-page">
-        <div className="track-card">
-          <h1>Менин заказым</h1>
-          <p>Заказ табылган жок</p>
-          <Link className="back-link" to="/table/1">
-            Менюга өтүү
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="track-page">
-      <div className="track-card">
-        <h1>Менин заказым</h1>
-
-        <p>
-          <strong>Стол:</strong> №{order.tableNumber}
-        </p>
-
-        <p>
-          <strong>Статус:</strong>{" "}
-          <span className={`status ${order.status}`}>{order.status}</span>
-        </p>
-
-        <p>
-          <strong>Төлөм:</strong> {order.paymentMethod} /{" "}
-          {order.paymentStatus || "pending"}
-        </p>
-
-        <div className="order-items" style={{ marginTop: "18px" }}>
-          {order.items?.map((item, index) => (
-            <div key={index} className="order-item-line">
-              <span>
-                {item.name} × {item.qty}
-              </span>
-              <strong>{item.price * item.qty} сом</strong>
-            </div>
-          ))}
-        </div>
-
-        <div className="cart-bottom" style={{ marginTop: "18px" }}>
-          <h3>Жалпы: {order.totalAmount} сом</h3>
-        </div>
-
-        <div
-          className="button-row"
-          style={{
-            display: "flex",
-            gap: "12px",
-            flexWrap: "wrap",
-            marginTop: "18px",
-          }}
-        >
-          {order.status === "pending" && (
-            <button
-              className="submit-btn"
-              onClick={handleCancel}
-              disabled={cancelLoading}
-            >
-              {cancelLoading ? "Отмена..." : "Заказды отмена кылуу"}
-            </button>
-          )}
-
-          <Link className="back-link" to={`/table/${order.tableNumber}`}>
-            Менюга кайтуу
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+  const table = order?.tableNumber || localStorage.getItem("lastOrderTable") || 1;
+  return <CafeFrame table={table}><section className="cafe-result-card cafe-tracking"><span className="cafe-eyebrow">{t("СИЗДИН ЗАКАЗ")}</span><h1>{paymentReturn ? t("Заказ жана төлөм") : t("Менин заказым")}</h1>{loading && <p className="cafe-menu-loading" role="status"><span className="cafe-spinner" />{t("Маалымат жүктөлүүдө…")}</p>}{error && <div className="cafe-alert" role="alert">{t(error)}</div>}{!orderId && <CafeEmpty title={t("Заказ табылган жок")} detail={t("Менюдан товар тандап, заказ берсеңиз болот.")} />}{order && <><div className="cafe-tracking-header"><span>№{String(order._id).slice(-6).toUpperCase()} · {t("Стол")} №{order.tableNumber}</span><span className={"cafe-status cafe-status-" + order.status}>{t(CUSTOMER_STATUSES[order.status] || t("Статус белгисиз"))}</span></div><p className="cafe-tracking-type">{{
+            dinein: t("Залда"),
+            takeaway: t("Алып кетүү"),
+            delivery: t("Жеткирүү")
+          }[order.orderType] || ""}</p><ul className="cafe-tracking-items">{(order.items || []).map((item, index) => <li key={index}><div><strong>{localizedField(item, "name", language)} × {item.qty}</strong>{Object.keys(item.selectedOptions || {}).length > 0 && <small>{Object.entries(item.selectedOptions).map(([key, value]) => key + ": " + value).join(" · ")}</small>}</div><span>{money(item.price * item.qty)}</span></li>)}</ul>{order.comment && <p className="cafe-tracking-comment"><strong>{t("Комментарий: ")}</strong>{order.comment}</p>}<div className="cafe-cart-total"><span>{t("Жалпы сумма")}</span><strong>{money(order.totalAmount)}</strong></div><div className="cafe-payment-state"><span>{t(CUSTOMER_PAYMENTS[order.paymentMethod] || t("Төлөм ыкмасы"))}</span><strong>{t(CUSTOMER_PAYMENTS[order.paymentStatus] || t("Төлөм статусу белгисиз"))}</strong></div>{paymentReturn && order.paymentStatus !== "paid" && <p className="cafe-payment-note">{t("Төлөмдүн ийгиликтүү аяктаганы азырынча ырасталган жок. Официанттан тактап алыңыз.")}</p>}</>}<div className="cafe-result-actions">{orderId && <button className="cafe-button cafe-button-outline" disabled={loading || cancelLoading} onClick={load}>{t("Статусту жаңыртуу")}</button>}{order?.status === "pending" && <button className="cafe-button cafe-button-danger" onClick={cancel} disabled={cancelLoading || loading}>{cancelLoading ? t("Жокко чыгарылууда…") : t("Заказды жокко чыгаруу")}</button>}<Link className="cafe-button cafe-button-primary" to={"/table/" + table}>{t("Менюга кайтуу")}<CafeIcon name="arrow" /></Link></div></section></CafeFrame>;
 }

@@ -1,3 +1,4 @@
+import { revokeCurrentPush } from "../notifications/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchMe } from "../services/api";
@@ -16,6 +17,7 @@ export default function useAdminAuth() {
         if (active) socket.connect();
       } catch {
         if (active) {
+          try { await revokeCurrentPush(localStorage.getItem("admin_token")); } catch {}
           socket.disconnect();
           localStorage.removeItem("admin_token");
           navigate("/admin/login", { replace: true });

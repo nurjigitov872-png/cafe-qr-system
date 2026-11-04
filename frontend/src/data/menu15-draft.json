@@ -1,0 +1,1750 @@
+{
+  "format": "cafe-product-translations-v1",
+  "status": "DRAFT_NOT_APPLIED",
+  "catalogCount": 275,
+  "selectedCount": 15,
+  "remainingCount": 260,
+  "notice": "Local development preview only; three ice-cream positions are existing records with different preset flavours, not newly created products.",
+  "products": [
+    {
+      "productId": "69e5af0bfeab925b0f78ffd5",
+      "approved": false,
+      "selectionGroup": "Food",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffd5",
+        "name": "Бургер классикалык",
+        "description": "Ширелүү котлета, салат жалбырак, сыр жана фирмалык соус.",
+        "category": "Food",
+        "price": 250,
+        "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80",
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700ebe",
+            "name": "Размер",
+            "values": [
+              "Маленький",
+              "Средний",
+              "Большой"
+            ]
+          },
+          {
+            "optionId": "6aeb744fc05c70adee700ebf",
+            "name": "Сыр",
+            "values": [
+              "Без сыра",
+              "Чеддер",
+              "Моцарелла"
+            ]
+          }
+        ]
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Классикалык бургер",
+            "description": "Ширелүү котлета, салат жалбырак, сыр жана фирмалык соус.",
+            "category": "Тамактар"
+          },
+          "ru": {
+            "name": "Классический бургер",
+            "description": "Сочная котлета, салат, сыр и фирменный соус.",
+            "category": "Блюда"
+          },
+          "en": {
+            "name": "Classic burger",
+            "description": "A juicy patty, lettuce, cheese and house sauce.",
+            "category": "Food"
+          },
+          "tr": {
+            "name": "Klasik burger",
+            "description": "Sulu köfte, marul, peynir ve özel sos.",
+            "category": "Yemekler"
+          }
+        },
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700ebe",
+            "translations": {
+              "ky": {
+                "name": "Көлөм",
+                "values": [
+                  {
+                    "value": "Маленький",
+                    "label": "Кичине"
+                  },
+                  {
+                    "value": "Средний",
+                    "label": "Орточо"
+                  },
+                  {
+                    "value": "Большой",
+                    "label": "Чоң"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Размер",
+                "values": [
+                  {
+                    "value": "Маленький",
+                    "label": "Маленький"
+                  },
+                  {
+                    "value": "Средний",
+                    "label": "Средний"
+                  },
+                  {
+                    "value": "Большой",
+                    "label": "Большой"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Size",
+                "values": [
+                  {
+                    "value": "Маленький",
+                    "label": "Small"
+                  },
+                  {
+                    "value": "Средний",
+                    "label": "Medium"
+                  },
+                  {
+                    "value": "Большой",
+                    "label": "Large"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Boyut",
+                "values": [
+                  {
+                    "value": "Маленький",
+                    "label": "Küçük"
+                  },
+                  {
+                    "value": "Средний",
+                    "label": "Orta"
+                  },
+                  {
+                    "value": "Большой",
+                    "label": "Büyük"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "optionId": "6aeb744fc05c70adee700ebf",
+            "translations": {
+              "ky": {
+                "name": "Сыр",
+                "values": [
+                  {
+                    "value": "Без сыра",
+                    "label": "Сырсыз"
+                  },
+                  {
+                    "value": "Чеддер",
+                    "label": "Чеддер"
+                  },
+                  {
+                    "value": "Моцарелла",
+                    "label": "Моцарелла"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Сыр",
+                "values": [
+                  {
+                    "value": "Без сыра",
+                    "label": "Без сыра"
+                  },
+                  {
+                    "value": "Чеддер",
+                    "label": "Чеддер"
+                  },
+                  {
+                    "value": "Моцарелла",
+                    "label": "Моцарелла"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Cheese",
+                "values": [
+                  {
+                    "value": "Без сыра",
+                    "label": "No cheese"
+                  },
+                  {
+                    "value": "Чеддер",
+                    "label": "Cheddar"
+                  },
+                  {
+                    "value": "Моцарелла",
+                    "label": "Mozzarella"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Peynir",
+                "values": [
+                  {
+                    "value": "Без сыра",
+                    "label": "Peynirsiz"
+                  },
+                  {
+                    "value": "Чеддер",
+                    "label": "Çedar"
+                  },
+                  {
+                    "value": "Моцарелла",
+                    "label": "Mozzarella"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffd8",
+      "approved": false,
+      "selectionGroup": "Food",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffd8",
+        "name": "Пицца Маргарита",
+        "description": "Классикалык пицца: томат соусу, сыр моцарелла, базилик.",
+        "category": "Food",
+        "price": 500,
+        "image": "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=800&q=80",
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700ead",
+            "name": "Размер",
+            "values": [
+              "25 см",
+              "30 см",
+              "35 см"
+            ]
+          },
+          {
+            "optionId": "6aeb744fc05c70adee700eae",
+            "name": "Бортик",
+            "values": [
+              "Обычный",
+              "Сырный"
+            ]
+          }
+        ]
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Маргарита пиццасы",
+            "description": "Классикалык пицца: томат соусу, сыр моцарелла, базилик.",
+            "category": "Тамактар"
+          },
+          "ru": {
+            "name": "Пицца Маргарита",
+            "description": "Классическая пицца: томатный соус, моцарелла и базилик.",
+            "category": "Блюда"
+          },
+          "en": {
+            "name": "Margherita pizza",
+            "description": "Classic pizza with tomato sauce, mozzarella and basil.",
+            "category": "Food"
+          },
+          "tr": {
+            "name": "Margherita pizza",
+            "description": "Domates sosu, mozzarella ve fesleğenli klasik pizza.",
+            "category": "Yemekler"
+          }
+        },
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700ead",
+            "translations": {
+              "ky": {
+                "name": "Көлөм",
+                "values": [
+                  {
+                    "value": "25 см",
+                    "label": "25 см"
+                  },
+                  {
+                    "value": "30 см",
+                    "label": "30 см"
+                  },
+                  {
+                    "value": "35 см",
+                    "label": "35 см"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Размер",
+                "values": [
+                  {
+                    "value": "25 см",
+                    "label": "25 см"
+                  },
+                  {
+                    "value": "30 см",
+                    "label": "30 см"
+                  },
+                  {
+                    "value": "35 см",
+                    "label": "35 см"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Size",
+                "values": [
+                  {
+                    "value": "25 см",
+                    "label": "25 cm"
+                  },
+                  {
+                    "value": "30 см",
+                    "label": "30 cm"
+                  },
+                  {
+                    "value": "35 см",
+                    "label": "35 cm"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Boyut",
+                "values": [
+                  {
+                    "value": "25 см",
+                    "label": "25 cm"
+                  },
+                  {
+                    "value": "30 см",
+                    "label": "30 cm"
+                  },
+                  {
+                    "value": "35 см",
+                    "label": "35 cm"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "optionId": "6aeb744fc05c70adee700eae",
+            "translations": {
+              "ky": {
+                "name": "Чети",
+                "values": [
+                  {
+                    "value": "Обычный",
+                    "label": "Кадимки"
+                  },
+                  {
+                    "value": "Сырный",
+                    "label": "Сырдуу"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Бортик",
+                "values": [
+                  {
+                    "value": "Обычный",
+                    "label": "Обычный"
+                  },
+                  {
+                    "value": "Сырный",
+                    "label": "Сырный"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Crust",
+                "values": [
+                  {
+                    "value": "Обычный",
+                    "label": "Regular"
+                  },
+                  {
+                    "value": "Сырный",
+                    "label": "Cheese"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Kenar",
+                "values": [
+                  {
+                    "value": "Обычный",
+                    "label": "Standart"
+                  },
+                  {
+                    "value": "Сырный",
+                    "label": "Peynirli"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffde",
+      "approved": false,
+      "selectionGroup": "Food",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffde",
+        "name": "Салат Цезарь",
+        "description": "Тоок эти, сыр, жалбырак жана цезарь соусу.",
+        "category": "Food",
+        "price": 320,
+        "image": "https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&w=800&q=80",
+        "options": []
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Цезарь салаты",
+            "description": "Тоок эти, сыр, жалбырак жана цезарь соусу.",
+            "category": "Тамактар"
+          },
+          "ru": {
+            "name": "Салат Цезарь",
+            "description": "Курица, сыр, салатные листья и соус Цезарь.",
+            "category": "Блюда"
+          },
+          "en": {
+            "name": "Caesar salad",
+            "description": "Chicken, cheese, salad leaves and Caesar dressing.",
+            "category": "Food"
+          },
+          "tr": {
+            "name": "Sezar salatası",
+            "description": "Tavuk, peynir, salata yaprakları ve Sezar sosu.",
+            "category": "Yemekler"
+          }
+        },
+        "options": []
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffdc",
+      "approved": false,
+      "selectionGroup": "Food",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffdc",
+        "name": "Шаурма",
+        "description": "Жумшак лаваш, эт, жашылча жана соус.",
+        "category": "Food",
+        "price": 230,
+        "image": "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=800&q=80",
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eb2",
+            "name": "Мясо",
+            "values": [
+              "Курица",
+              "Говядина"
+            ]
+          },
+          {
+            "optionId": "6aeb744fc05c70adee700eb3",
+            "name": "Острота",
+            "values": [
+              "Неострая",
+              "Средняя",
+              "Острая"
+            ]
+          }
+        ]
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Шаурма",
+            "description": "Жумшак лаваш, эт, жашылча жана соус.",
+            "category": "Тамактар"
+          },
+          "ru": {
+            "name": "Шаурма",
+            "description": "Мягкий лаваш, мясо, овощи и соус.",
+            "category": "Блюда"
+          },
+          "en": {
+            "name": "Shawarma",
+            "description": "Soft flatbread with meat, vegetables and sauce.",
+            "category": "Food"
+          },
+          "tr": {
+            "name": "Şavurma",
+            "description": "Yumuşak lavaş içinde et, sebzeler ve sos.",
+            "category": "Yemekler"
+          }
+        },
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eb2",
+            "translations": {
+              "ky": {
+                "name": "Эт",
+                "values": [
+                  {
+                    "value": "Курица",
+                    "label": "Тоок эти"
+                  },
+                  {
+                    "value": "Говядина",
+                    "label": "Уй эти"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Мясо",
+                "values": [
+                  {
+                    "value": "Курица",
+                    "label": "Курица"
+                  },
+                  {
+                    "value": "Говядина",
+                    "label": "Говядина"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Meat",
+                "values": [
+                  {
+                    "value": "Курица",
+                    "label": "Chicken"
+                  },
+                  {
+                    "value": "Говядина",
+                    "label": "Beef"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Et",
+                "values": [
+                  {
+                    "value": "Курица",
+                    "label": "Tavuk"
+                  },
+                  {
+                    "value": "Говядина",
+                    "label": "Dana eti"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "optionId": "6aeb744fc05c70adee700eb3",
+            "translations": {
+              "ky": {
+                "name": "Ачуулугу",
+                "values": [
+                  {
+                    "value": "Неострая",
+                    "label": "Ачуу эмес"
+                  },
+                  {
+                    "value": "Средняя",
+                    "label": "Орточо"
+                  },
+                  {
+                    "value": "Острая",
+                    "label": "Ачуу"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Острота",
+                "values": [
+                  {
+                    "value": "Неострая",
+                    "label": "Неострая"
+                  },
+                  {
+                    "value": "Средняя",
+                    "label": "Средняя"
+                  },
+                  {
+                    "value": "Острая",
+                    "label": "Острая"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Spice level",
+                "values": [
+                  {
+                    "value": "Неострая",
+                    "label": "Not spicy"
+                  },
+                  {
+                    "value": "Средняя",
+                    "label": "Medium"
+                  },
+                  {
+                    "value": "Острая",
+                    "label": "Spicy"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Acılık",
+                "values": [
+                  {
+                    "value": "Неострая",
+                    "label": "Acısız"
+                  },
+                  {
+                    "value": "Средняя",
+                    "label": "Orta"
+                  },
+                  {
+                    "value": "Острая",
+                    "label": "Acılı"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffdb",
+      "approved": false,
+      "selectionGroup": "Food",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffdb",
+        "name": "Наггетсы",
+        "description": "Кытырак кабыктагы тоок наггетстери.",
+        "category": "Food",
+        "price": 220,
+        "image": "https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=800&q=80",
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eac",
+            "name": "Порция",
+            "values": [
+              "6 шт",
+              "9 шт",
+              "12 шт"
+            ]
+          }
+        ]
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Тоок наггетстери",
+            "description": "Кытырак кабыктагы тоок наггетстери.",
+            "category": "Тамактар"
+          },
+          "ru": {
+            "name": "Наггетсы",
+            "description": "Куриные наггетсы в хрустящей корочке.",
+            "category": "Блюда"
+          },
+          "en": {
+            "name": "Chicken nuggets",
+            "description": "Chicken nuggets with a crispy coating.",
+            "category": "Food"
+          },
+          "tr": {
+            "name": "Tavuk nugget",
+            "description": "Çıtır kaplamalı tavuk nugget.",
+            "category": "Yemekler"
+          }
+        },
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eac",
+            "translations": {
+              "ky": {
+                "name": "Порция",
+                "values": [
+                  {
+                    "value": "6 шт",
+                    "label": "6 даана"
+                  },
+                  {
+                    "value": "9 шт",
+                    "label": "9 даана"
+                  },
+                  {
+                    "value": "12 шт",
+                    "label": "12 даана"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Порция",
+                "values": [
+                  {
+                    "value": "6 шт",
+                    "label": "6 шт."
+                  },
+                  {
+                    "value": "9 шт",
+                    "label": "9 шт."
+                  },
+                  {
+                    "value": "12 шт",
+                    "label": "12 шт."
+                  }
+                ]
+              },
+              "en": {
+                "name": "Portion",
+                "values": [
+                  {
+                    "value": "6 шт",
+                    "label": "6 pieces"
+                  },
+                  {
+                    "value": "9 шт",
+                    "label": "9 pieces"
+                  },
+                  {
+                    "value": "12 шт",
+                    "label": "12 pieces"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Porsiyon",
+                "values": [
+                  {
+                    "value": "6 шт",
+                    "label": "6 adet"
+                  },
+                  {
+                    "value": "9 шт",
+                    "label": "9 adet"
+                  },
+                  {
+                    "value": "12 шт",
+                    "label": "12 adet"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffdf",
+      "approved": false,
+      "selectionGroup": "Drink",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffdf",
+        "name": "Кофе",
+        "description": "Жыпар жыттуу ысык кофе.",
+        "category": "Drink",
+        "price": 120,
+        "image": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80",
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eb5",
+            "name": "Сахар",
+            "values": [
+              "Без сахара",
+              "1 ложка",
+              "2 ложки"
+            ]
+          }
+        ]
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Кофе",
+            "description": "Жыпар жыттуу ысык кофе.",
+            "category": "Суусундуктар"
+          },
+          "ru": {
+            "name": "Кофе",
+            "description": "Ароматный горячий кофе.",
+            "category": "Напитки"
+          },
+          "en": {
+            "name": "Coffee",
+            "description": "Aromatic hot coffee.",
+            "category": "Drinks"
+          },
+          "tr": {
+            "name": "Kahve",
+            "description": "Aromatik sıcak kahve.",
+            "category": "İçecekler"
+          }
+        },
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eb5",
+            "translations": {
+              "ky": {
+                "name": "Шекер",
+                "values": [
+                  {
+                    "value": "Без сахара",
+                    "label": "Шекерсиз"
+                  },
+                  {
+                    "value": "1 ложка",
+                    "label": "1 кашык"
+                  },
+                  {
+                    "value": "2 ложки",
+                    "label": "2 кашык"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Сахар",
+                "values": [
+                  {
+                    "value": "Без сахара",
+                    "label": "Без сахара"
+                  },
+                  {
+                    "value": "1 ложка",
+                    "label": "1 ложка"
+                  },
+                  {
+                    "value": "2 ложки",
+                    "label": "2 ложки"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Sugar",
+                "values": [
+                  {
+                    "value": "Без сахара",
+                    "label": "No sugar"
+                  },
+                  {
+                    "value": "1 ложка",
+                    "label": "1 spoon"
+                  },
+                  {
+                    "value": "2 ложки",
+                    "label": "2 spoons"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Şeker",
+                "values": [
+                  {
+                    "value": "Без сахара",
+                    "label": "Şekersiz"
+                  },
+                  {
+                    "value": "1 ложка",
+                    "label": "1 kaşık"
+                  },
+                  {
+                    "value": "2 ложки",
+                    "label": "2 kaşık"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffe0",
+      "approved": false,
+      "selectionGroup": "Drink",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffe0",
+        "name": "Капучино",
+        "description": "Жумшак көбүктүү капучино.",
+        "category": "Drink",
+        "price": 150,
+        "image": "https://images.unsplash.com/photo-1497636577773-f1231844b336?auto=format&fit=crop&w=800&q=80",
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eb8",
+            "name": "Размер",
+            "values": [
+              "250 мл",
+              "350 мл",
+              "450 мл"
+            ]
+          },
+          {
+            "optionId": "6aeb744fc05c70adee700eb9",
+            "name": "Молоко",
+            "values": [
+              "Обычное",
+              "Соевое",
+              "Безлактозное"
+            ]
+          }
+        ]
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Капучино",
+            "description": "Жумшак көбүктүү капучино.",
+            "category": "Суусундуктар"
+          },
+          "ru": {
+            "name": "Капучино",
+            "description": "Капучино с нежной пенкой.",
+            "category": "Напитки"
+          },
+          "en": {
+            "name": "Cappuccino",
+            "description": "Cappuccino with a soft foam.",
+            "category": "Drinks"
+          },
+          "tr": {
+            "name": "Cappuccino",
+            "description": "Yumuşak köpüklü cappuccino.",
+            "category": "İçecekler"
+          }
+        },
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eb8",
+            "translations": {
+              "ky": {
+                "name": "Көлөм",
+                "values": [
+                  {
+                    "value": "250 мл",
+                    "label": "250 мл"
+                  },
+                  {
+                    "value": "350 мл",
+                    "label": "350 мл"
+                  },
+                  {
+                    "value": "450 мл",
+                    "label": "450 мл"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Размер",
+                "values": [
+                  {
+                    "value": "250 мл",
+                    "label": "250 мл"
+                  },
+                  {
+                    "value": "350 мл",
+                    "label": "350 мл"
+                  },
+                  {
+                    "value": "450 мл",
+                    "label": "450 мл"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Size",
+                "values": [
+                  {
+                    "value": "250 мл",
+                    "label": "250 ml"
+                  },
+                  {
+                    "value": "350 мл",
+                    "label": "350 ml"
+                  },
+                  {
+                    "value": "450 мл",
+                    "label": "450 ml"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Boyut",
+                "values": [
+                  {
+                    "value": "250 мл",
+                    "label": "250 ml"
+                  },
+                  {
+                    "value": "350 мл",
+                    "label": "350 ml"
+                  },
+                  {
+                    "value": "450 мл",
+                    "label": "450 ml"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "optionId": "6aeb744fc05c70adee700eb9",
+            "translations": {
+              "ky": {
+                "name": "Сүт",
+                "values": [
+                  {
+                    "value": "Обычное",
+                    "label": "Кадимки"
+                  },
+                  {
+                    "value": "Соевое",
+                    "label": "Соя сүтү"
+                  },
+                  {
+                    "value": "Безлактозное",
+                    "label": "Лактозасыз"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Молоко",
+                "values": [
+                  {
+                    "value": "Обычное",
+                    "label": "Обычное"
+                  },
+                  {
+                    "value": "Соевое",
+                    "label": "Соевое"
+                  },
+                  {
+                    "value": "Безлактозное",
+                    "label": "Безлактозное"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Milk",
+                "values": [
+                  {
+                    "value": "Обычное",
+                    "label": "Regular"
+                  },
+                  {
+                    "value": "Соевое",
+                    "label": "Soy"
+                  },
+                  {
+                    "value": "Безлактозное",
+                    "label": "Lactose-free"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Süt",
+                "values": [
+                  {
+                    "value": "Обычное",
+                    "label": "Normal"
+                  },
+                  {
+                    "value": "Соевое",
+                    "label": "Soya"
+                  },
+                  {
+                    "value": "Безлактозное",
+                    "label": "Laktozsuz"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffe1",
+      "approved": false,
+      "selectionGroup": "Drink",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffe1",
+        "name": "Латте",
+        "description": "Сүттүү жумшак латте.",
+        "category": "Drink",
+        "price": 160,
+        "image": "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=800&q=80",
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eb6",
+            "name": "Сироп",
+            "values": [
+              "Ваниль",
+              "Карамель",
+              "Шоколад"
+            ]
+          }
+        ]
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Латте",
+            "description": "Сүттүү жумшак латте.",
+            "category": "Суусундуктар"
+          },
+          "ru": {
+            "name": "Латте",
+            "description": "Нежный молочный латте.",
+            "category": "Напитки"
+          },
+          "en": {
+            "name": "Latte",
+            "description": "A smooth, milky latte.",
+            "category": "Drinks"
+          },
+          "tr": {
+            "name": "Latte",
+            "description": "Yumuşak içimli, sütlü latte.",
+            "category": "İçecekler"
+          }
+        },
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eb6",
+            "translations": {
+              "ky": {
+                "name": "Сироп",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Ваниль"
+                  },
+                  {
+                    "value": "Карамель",
+                    "label": "Карамель"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Шоколад"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Сироп",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Ваниль"
+                  },
+                  {
+                    "value": "Карамель",
+                    "label": "Карамель"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Шоколад"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Syrup",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Vanilla"
+                  },
+                  {
+                    "value": "Карамель",
+                    "label": "Caramel"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Chocolate"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Şurup",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Vanilya"
+                  },
+                  {
+                    "value": "Карамель",
+                    "label": "Karamel"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Çikolata"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffe3",
+      "approved": false,
+      "selectionGroup": "Drink",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffe3",
+        "name": "Чай жашыл",
+        "description": "Жеңил жана пайдалуу жашыл чай.",
+        "category": "Drink",
+        "price": 90,
+        "image": "https://images.unsplash.com/photo-1515823662972-da6a2e4d3002?auto=format&fit=crop&w=800&q=80",
+        "options": []
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Жашыл чай",
+            "description": "Жеңил жана пайдалуу жашыл чай.",
+            "category": "Суусундуктар"
+          },
+          "ru": {
+            "name": "Зелёный чай",
+            "description": "Лёгкий и полезный зелёный чай.",
+            "category": "Напитки"
+          },
+          "en": {
+            "name": "Green tea",
+            "description": "Light and wholesome green tea.",
+            "category": "Drinks"
+          },
+          "tr": {
+            "name": "Yeşil çay",
+            "description": "Hafif ve faydalı yeşil çay.",
+            "category": "İçecekler"
+          }
+        },
+        "options": []
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffe6",
+      "approved": false,
+      "selectionGroup": "Drink",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffe6",
+        "name": "Сок апельсин",
+        "description": "Табигый апельсин ширеси.",
+        "category": "Drink",
+        "price": 120,
+        "image": "https://images.unsplash.com/photo-1600271886742-f049cd5bba3f?auto=format&fit=crop&w=800&q=80",
+        "options": []
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Апельсин ширеси",
+            "description": "Табигый апельсин ширеси.",
+            "category": "Суусундуктар"
+          },
+          "ru": {
+            "name": "Апельсиновый сок",
+            "description": "Натуральный апельсиновый сок.",
+            "category": "Напитки"
+          },
+          "en": {
+            "name": "Orange juice",
+            "description": "Natural orange juice.",
+            "category": "Drinks"
+          },
+          "tr": {
+            "name": "Portakal suyu",
+            "description": "Doğal portakal suyu.",
+            "category": "İçecekler"
+          }
+        },
+        "options": []
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffe9",
+      "approved": false,
+      "selectionGroup": "Dessert",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffe9",
+        "name": "Шоколад торт",
+        "description": "Коюу шоколаддуу торт.",
+        "category": "Dessert",
+        "price": 210,
+        "image": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80",
+        "options": []
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Шоколаддуу торт",
+            "description": "Коюу шоколаддуу торт.",
+            "category": "Десерттер"
+          },
+          "ru": {
+            "name": "Шоколадный торт",
+            "description": "Торт с насыщенным шоколадным вкусом.",
+            "category": "Десерты"
+          },
+          "en": {
+            "name": "Chocolate cake",
+            "description": "A cake with a rich chocolate flavour.",
+            "category": "Desserts"
+          },
+          "tr": {
+            "name": "Çikolatalı pasta",
+            "description": "Yoğun çikolata lezzetli pasta.",
+            "category": "Tatlılar"
+          }
+        },
+        "options": []
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffe8",
+      "approved": false,
+      "selectionGroup": "Dessert",
+      "presetOptions": {},
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffe8",
+        "name": "Чизкейк",
+        "description": "Жумшак кремдүү чизкейк.",
+        "category": "Dessert",
+        "price": 190,
+        "image": "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=800&q=80",
+        "options": []
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Чизкейк",
+            "description": "Жумшак кремдүү чизкейк.",
+            "category": "Десерттер"
+          },
+          "ru": {
+            "name": "Чизкейк",
+            "description": "Нежный сливочный чизкейк.",
+            "category": "Десерты"
+          },
+          "en": {
+            "name": "Cheesecake",
+            "description": "A smooth, creamy cheesecake.",
+            "category": "Desserts"
+          },
+          "tr": {
+            "name": "Cheesecake",
+            "description": "Yumuşak ve kremalı cheesecake.",
+            "category": "Tatlılar"
+          }
+        },
+        "options": []
+      }
+    },
+    {
+      "productId": "69e5af0bfeab925b0f78ffea",
+      "approved": false,
+      "selectionGroup": "Dessert",
+      "presetOptions": {
+        "Вкус": "Ваниль"
+      },
+      "source": {
+        "productId": "69e5af0bfeab925b0f78ffea",
+        "name": "Мороженое",
+        "description": "Муздак жана даамдуу десерт.",
+        "category": "Dessert",
+        "price": 140,
+        "image": "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=800&q=80",
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eab",
+            "name": "Вкус",
+            "values": [
+              "Ваниль",
+              "Шоколад",
+              "Клубника"
+            ]
+          }
+        ]
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Балмуздак",
+            "description": "Муздак жана даамдуу десерт.",
+            "category": "Десерттер"
+          },
+          "ru": {
+            "name": "Мороженое",
+            "description": "Холодный и вкусный десерт.",
+            "category": "Десерты"
+          },
+          "en": {
+            "name": "Ice cream",
+            "description": "A cold and delicious dessert.",
+            "category": "Desserts"
+          },
+          "tr": {
+            "name": "Dondurma",
+            "description": "Soğuk ve lezzetli bir tatlı.",
+            "category": "Tatlılar"
+          }
+        },
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700eab",
+            "translations": {
+              "ky": {
+                "name": "Даам",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Ваниль"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Шоколад"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Кулпунай"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Вкус",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Ваниль"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Шоколад"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Клубника"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Flavour",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Vanilla"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Chocolate"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Strawberry"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Lezzet",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Vanilya"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Çikolata"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Çilek"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "productId": "69e5aafc2707821a2b067bd5",
+      "approved": false,
+      "selectionGroup": "Dessert",
+      "presetOptions": {
+        "Вкус": "Шоколад"
+      },
+      "source": {
+        "productId": "69e5aafc2707821a2b067bd5",
+        "name": "Мороженое",
+        "description": "Муздак жана даамдуу десерт.",
+        "category": "Dessert",
+        "price": 140,
+        "image": "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=800&q=80",
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700ec0",
+            "name": "Вкус",
+            "values": [
+              "Ваниль",
+              "Шоколад",
+              "Клубника"
+            ]
+          }
+        ]
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Балмуздак",
+            "description": "Муздак жана даамдуу десерт.",
+            "category": "Десерттер"
+          },
+          "ru": {
+            "name": "Мороженое",
+            "description": "Холодный и вкусный десерт.",
+            "category": "Десерты"
+          },
+          "en": {
+            "name": "Ice cream",
+            "description": "A cold and delicious dessert.",
+            "category": "Desserts"
+          },
+          "tr": {
+            "name": "Dondurma",
+            "description": "Soğuk ve lezzetli bir tatlı.",
+            "category": "Tatlılar"
+          }
+        },
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700ec0",
+            "translations": {
+              "ky": {
+                "name": "Даам",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Ваниль"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Шоколад"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Кулпунай"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Вкус",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Ваниль"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Шоколад"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Клубника"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Flavour",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Vanilla"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Chocolate"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Strawberry"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Lezzet",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Vanilya"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Çikolata"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Çilek"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "productId": "69ddcb134a9170f52ac1c6ed",
+      "approved": false,
+      "selectionGroup": "Dessert",
+      "presetOptions": {
+        "Вкус": "Клубника"
+      },
+      "source": {
+        "productId": "69ddcb134a9170f52ac1c6ed",
+        "name": "Мороженое",
+        "description": "Муздак жана даамдуу десерт.",
+        "category": "Dessert",
+        "price": 140,
+        "image": "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=800&q=80",
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700ed5",
+            "name": "Вкус",
+            "values": [
+              "Ваниль",
+              "Шоколад",
+              "Клубника"
+            ]
+          }
+        ]
+      },
+      "proposed": {
+        "translations": {
+          "ky": {
+            "name": "Балмуздак",
+            "description": "Муздак жана даамдуу десерт.",
+            "category": "Десерттер"
+          },
+          "ru": {
+            "name": "Мороженое",
+            "description": "Холодный и вкусный десерт.",
+            "category": "Десерты"
+          },
+          "en": {
+            "name": "Ice cream",
+            "description": "A cold and delicious dessert.",
+            "category": "Desserts"
+          },
+          "tr": {
+            "name": "Dondurma",
+            "description": "Soğuk ve lezzetli bir tatlı.",
+            "category": "Tatlılar"
+          }
+        },
+        "options": [
+          {
+            "optionId": "6aeb744fc05c70adee700ed5",
+            "translations": {
+              "ky": {
+                "name": "Даам",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Ваниль"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Шоколад"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Кулпунай"
+                  }
+                ]
+              },
+              "ru": {
+                "name": "Вкус",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Ваниль"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Шоколад"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Клубника"
+                  }
+                ]
+              },
+              "en": {
+                "name": "Flavour",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Vanilla"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Chocolate"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Strawberry"
+                  }
+                ]
+              },
+              "tr": {
+                "name": "Lezzet",
+                "values": [
+                  {
+                    "value": "Ваниль",
+                    "label": "Vanilya"
+                  },
+                  {
+                    "value": "Шоколад",
+                    "label": "Çikolata"
+                  },
+                  {
+                    "value": "Клубника",
+                    "label": "Çilek"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

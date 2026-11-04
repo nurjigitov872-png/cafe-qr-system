@@ -1,5 +1,16 @@
 const mongoose = require("mongoose");
 
+const localizedText = new mongoose.Schema({
+  name: { type: String, maxlength: 200 },
+  description: { type: String, maxlength: 4000 },
+  category: { type: String, maxlength: 120 },
+}, { _id: false });
+const optionLabel = new mongoose.Schema({
+  name: { type: String, maxlength: 200 },
+  values: [{ _id: false, value: { type: String, required: true }, label: { type: String, maxlength: 200 } }],
+}, { _id: false });
+const locales = schema => ({ ky: { type: schema }, ru: { type: schema }, en: { type: schema }, tr: { type: schema } });
+
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -11,10 +22,12 @@ const productSchema = new mongoose.Schema(
     hidden: { type: Boolean, default: false },
     popular: { type: Boolean, default: false },
     discountPrice: { type: Number, default: null },
+    translations: locales(localizedText),
     options: [
       {
         name: String,
         values: [String],
+        translations: locales(optionLabel),
       },
     ],
   },
