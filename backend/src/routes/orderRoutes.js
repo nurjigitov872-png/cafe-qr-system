@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
+const { requireAdmin, requireOrderAccess, signToken, getSecret } = require("../middleware/auth");
+const { sendOrderNotification } = require("../utils/telegram");
 
-router.get("/dashboard/stats", async (req, res) => {
+router.get("/dashboard/stats", requireAdmin, async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
 
@@ -52,7 +54,7 @@ router.get("/dashboard/stats", async (req, res) => {
   }
 });
 
-router.get("/", async (req, res) => {
+router.get("/", requireAdmin, async (req, res) => {
   try {
     const filter = {};
     if (req.query.status) filter.status = req.query.status;
@@ -65,7 +67,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", requireOrderAccess, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
 
@@ -82,6 +84,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
+    getSecret();
     const body = req.body || {};
     const items = Array.isArray(body.items) ? body.items : [];
 
@@ -121,14 +124,18 @@ router.post("/", async (req, res) => {
       io.emit("new-order", order);
     }
 
-    res.status(201).json({ success: true, order });
+    // Notification failure must not turn a saved order into an HTTP error.
+    await sendOrderNotification(order);
+
+    const orderToken = signToken({ role: "customer" }, order._id);
+    res.status(201).json({ success: true, order, orderToken });
   } catch (error) {
     console.error("ORDER CREATE ERROR:", error.message);
     res.status(500).json({ message: error.message || "Заказ түзүү катасы" });
   }
 });
 
-router.patch("/:id/status", async (req, res) => {
+router.patch("/:id/status", requireAdmin, async (req, res) => {
   try {
     const allowedStatuses = [
       "pending",
@@ -165,10 +172,10 @@ router.patch("/:id/status", async (req, res) => {
   }
 });
 
-router.patch("/:id/cancel", async (req, res) => {
+router.patch("/:id/cancel", requireOrderAccess, async (req, res) => {
   try {
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
+    const order = await Order.findOneAndUpdate(
+      { _id: req.params.id, status: "pending" },
       { status: "cancelled" },
       { new: true }
     );

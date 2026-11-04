@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const WaiterCall = require("../models/WaiterCall");
+const { requireAdmin } = require("../middleware/auth");
 
-router.get("/", async (req, res) => {
+router.get("/", requireAdmin, async (req, res) => {
   try {
     const calls = await WaiterCall.find().sort({ createdAt: -1 });
     res.json(calls);
@@ -29,7 +30,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.patch("/:id/done", async (req, res) => {
+router.patch("/:id/done", requireAdmin, async (req, res) => {
   try {
     const call = await WaiterCall.findByIdAndUpdate(
       req.params.id,

@@ -41,6 +41,18 @@ export const fetchProducts = async (params = {}) => {
   return parseResponse(res);
 };
 
+const rememberOrder = (data) => {
+  if (data.order?._id && data.orderToken) {
+    localStorage.setItem("order_token_" + data.order._id, data.orderToken);
+  }
+  return data;
+};
+
+const orderHeaders = (id) => {
+  const token = localStorage.getItem("order_token_" + id) || getToken();
+  return token ? { Authorization: "Bearer " + token } : {};
+};
+
 export const createOrder = async (orderData) => {
   const res = await fetch(`${API_URL}/orders`, {
     method: "POST",
@@ -50,7 +62,7 @@ export const createOrder = async (orderData) => {
     body: JSON.stringify(orderData),
   });
 
-  return parseResponse(res);
+  return rememberOrder(await parseResponse(res));
 };
 
 export const submitOrder = async (order) => {
@@ -62,17 +74,18 @@ export const submitOrder = async (order) => {
     body: JSON.stringify(order),
   });
 
-  return parseResponse(res);
+  return rememberOrder(await parseResponse(res));
 };
 
 export const getOrderById = async (id) => {
-  const res = await fetch(`${API_URL}/orders/${id}`);
+  const res = await fetch(`${API_URL}/orders/${id}`, { headers: orderHeaders(id) });
   return parseResponse(res);
 };
 
 export const cancelOrder = async (id) => {
   const res = await fetch(`${API_URL}/orders/${id}/cancel`, {
     method: "PATCH",
+    headers: orderHeaders(id),
   });
 
   return parseResponse(res);

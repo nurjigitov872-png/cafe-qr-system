@@ -5,3 +5,9 @@ frontend/node_modules
 backend/node_modules
 frontend/dist
 backend/dist
+
+# Keep local environment variants private; allow sanitized templates.
+.env.*
+!.env.example
+!.env.sample
+!.env.template

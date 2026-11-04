@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Product = require("../models/Product");
+const { requireAdmin } = require("../middleware/auth");
 
 // Бардык продукттар
 router.get("/", async (req, res) => {
@@ -28,7 +29,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Кошуу
-router.post("/", async (req, res) => {
+router.post("/", requireAdmin, async (req, res) => {
   try {
     const product = new Product(req.body);
     const savedProduct = await product.save();
@@ -40,7 +41,7 @@ router.post("/", async (req, res) => {
 });
 
 // Өзгөртүү
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireAdmin, async (req, res) => {
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
@@ -59,7 +60,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Өчүрүү
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAdmin, async (req, res) => {
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
 

@@ -41,3 +41,13 @@ npm run dev
 
 ## Эскертүү
 Реал payment provider кошуу үчүн merchant credential керек.
+
+## MongoDB Atlas DNS
+
+If startup fails with `querySrv ECONNREFUSED`, set this optional value in `backend/.env`:
+
+```dotenv
+MONGO_DNS_SERVERS=1.1.1.1,8.8.8.8
+```
+
+These resolvers apply only to the backend Node.js process. Windows DNS and `MONGO_URI` remain unchanged. Leave the value empty to use system DNS. Restart the backend after changing it. Use organization-approved DNS servers when required. Keep `.env` private.
