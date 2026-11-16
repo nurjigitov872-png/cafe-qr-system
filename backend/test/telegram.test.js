@@ -18,8 +18,9 @@ function sandbox({ configured = true, fail = false } = {}) {
     }
   }
   const context = { module: { exports: {} }, require(name) {
+    if (name === "../config/integrations") return require("../src/config/integrations");
     assert.equal(name, "node-telegram-bot-api"); return FakeBot;
-  }, process: { env: configured ? { TELEGRAM_BOT_TOKEN: "FAKE_TEST_TOKEN", TELEGRAM_CHAT_ID: "FAKE_TEST_CHAT" } : {} },
+  }, process: { env: configured ? { APP_ENV: "staging", TELEGRAM_ENABLED: "true", TELEGRAM_BOT_TOKEN: "FAKE_TEST_TOKEN", TELEGRAM_CHAT_ID: "FAKE_TEST_CHAT" } : {} },
     console: { warn: (...args) => warnings.push(args.join(" ")) } };
   vm.runInNewContext(source, context);
   return { ...context.module.exports, sent, clients, warnings };

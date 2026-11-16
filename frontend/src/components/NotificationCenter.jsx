@@ -3,8 +3,9 @@ import {useLocation} from "react-router-dom";
 import {io} from "socket.io-client";
 import useCustomerPreferences from "../i18n/useCustomerPreferences";
 import {notificationWords,notificationText,mergeNotifications} from "../notifications/messages";
-import {notificationRequest,enablePush,supportsPush,SOCKET,pushDiagnostics,sendTestPush} from "../notifications/client";
+import {notificationRequest,enablePush,supportsPush,pushDiagnostics,sendTestPush} from "../notifications/client";
 import { createNotificationSound, shouldPlayNotification } from "../notifications/sound";
+import { SOCKET } from "../config/connections.js";
 import "../notifications/notifications.css";
 export default function NotificationCenter(){
  const location=useLocation();

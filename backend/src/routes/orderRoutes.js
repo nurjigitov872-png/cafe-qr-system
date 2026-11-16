@@ -49,8 +49,8 @@ router.get("/dashboard/stats", requireAdmin, async (req, res) => {
       popularProducts,
     });
   } catch (error) {
-    console.error("DASHBOARD ERROR:", error.message);
-    res.status(500).json({ message: error.message || "Статистика алуу катасы" });
+    console.error("DASHBOARD ERROR:");
+    res.status(500).json({ message: "Статистика алуу катасы" });
   }
 });
 
@@ -62,8 +62,8 @@ router.get("/", requireAdmin, async (req, res) => {
     const orders = await Order.find(filter).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
-    console.error("GET ORDERS ERROR:", error.message);
-    res.status(500).json({ message: error.message || "Заказдарды алуу катасы" });
+    console.error("GET ORDERS ERROR:");
+    res.status(500).json({ message: "Заказдарды алуу катасы" });
   }
 });
 
@@ -77,8 +77,8 @@ router.get("/:id", requireOrderAccess, async (req, res) => {
 
     res.json(order);
   } catch (error) {
-    console.error("GET ORDER ERROR:", error.message);
-    res.status(500).json({ message: error.message || "Заказды алуу катасы" });
+    console.error("GET ORDER ERROR:");
+    res.status(500).json({ message: "Заказды алуу катасы" });
   }
 });
 
@@ -132,8 +132,8 @@ router.post("/", async (req, res) => {
     const orderToken = signToken({ role: "customer" }, order._id);
     res.status(201).json({ success: true, order, orderToken });
   } catch (error) {
-    console.error("ORDER CREATE ERROR:", error.message);
-    res.status(500).json({ message: error.message || "Заказ түзүү катасы" });
+    console.error("ORDER CREATE ERROR:");
+    res.status(500).json({ message: "Заказ түзүү катасы" });
   }
 });
 
@@ -173,8 +173,8 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
     await req.app.get("notifications")?.publish("order.status", order);
     res.json(order);
   } catch (error) {
-    console.error("ORDER STATUS ERROR:", error.message);
-    res.status(500).json({ message: error.message || "Статус өзгөртүү катасы" });
+    console.error("ORDER STATUS ERROR:");
+    res.status(500).json({ message: "Статус өзгөртүү катасы" });
   }
 });
 
@@ -199,8 +199,8 @@ router.patch("/:id/cancel", requireOrderAccess, async (req, res) => {
     await req.app.get("notifications")?.publish("order.status", order);
     res.json(order);
   } catch (error) {
-    console.error("ORDER CANCEL ERROR:", error.message);
-    res.status(500).json({ message: error.message || "Заказды отмена кылуу катасы" });
+    console.error("ORDER CANCEL ERROR:");
+    res.status(500).json({ message: "Заказды отмена кылуу катасы" });
   }
 });
 

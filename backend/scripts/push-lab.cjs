@@ -5,7 +5,7 @@ function createPushLab(settings,{transport,serveStatic=true}={}){
  if(!settings.PUSH_LAB_ADMIN_PASSWORD||!settings.PUSH_LAB_JWT_SECRET)throw Error("Separate push-lab credentials are required");
  const real=settings.PUSH_LAB_ENABLE_REAL_PUSH==="true";
  if(real&&!origin.startsWith("https://"))throw Error("Real push lab requires an HTTPS public origin");
- process.env.NODE_ENV="development";process.env.ADMIN_USERNAME=settings.PUSH_LAB_ADMIN_USERNAME||"push-test-admin";process.env.ADMIN_PASSWORD=settings.PUSH_LAB_ADMIN_PASSWORD;process.env.JWT_SECRET=settings.PUSH_LAB_JWT_SECRET;
+ process.env.APP_ENV="push-lab";process.env.NODE_ENV="development";process.env.ADMIN_USERNAME=settings.PUSH_LAB_ADMIN_USERNAME||"push-test-admin";process.env.ADMIN_PASSWORD=settings.PUSH_LAB_ADMIN_PASSWORD;process.env.JWT_SECRET=settings.PUSH_LAB_JWT_SECRET;
  const express=require("express"),{Server}=require("socket.io");
  const {socketAuth,connectSocket}=require("../src/utils/notificationPolicy"),{createNotifications}=require("../src/utils/notifications");
  const subscriptions=[],reads=[];
@@ -19,7 +19,7 @@ function createPushLab(settings,{transport,serveStatic=true}={}){
  app.use("/api/auth/login",(req,res,next)=>{if(Date.now()-windowStart>=60000){windowStart=Date.now();loginAttempts=0;}if(++loginAttempts>20)return res.status(429).json({message:"Try later"});next();});
  app.use("/api/auth",require("../src/routes/authRoutes"));
  const server=http.createServer(app),io=new Server(server,{cors:{origin}});io.use(socketAuth);io.on("connection",connectSocket);
- const env={NODE_ENV:"development",PUSH_TEST_ENABLED:"true",...(real?{VAPID_PUBLIC_KEY:settings.VAPID_PUBLIC_KEY,VAPID_PRIVATE_KEY:settings.VAPID_PRIVATE_KEY,VAPID_SUBJECT:settings.VAPID_SUBJECT}:{})};
+ const env={APP_ENV:"push-lab",PUSH_LAB_ENABLE_REAL_PUSH:String(real),NODE_ENV:"development",PUSH_TEST_ENABLED:"true",...(real?{VAPID_PUBLIC_KEY:settings.VAPID_PUBLIC_KEY,VAPID_PRIVATE_KEY:settings.VAPID_PRIVATE_KEY,VAPID_SUBJECT:settings.VAPID_SUBJECT}:{})};
  const notifications=createNotifications(io,{env,transport:transport||(real?require("web-push"):{}),SubscriptionModel:Subscription,NotificationModel:{find:()=>rowsQuery([])},ReadModel:{find:()=>rowsQuery(reads),updateOne:async()=>{}}});
  app.set("notifications",notifications);app.use("/api/notifications",require("../src/routes/notificationRoutes"));
  app.use("/api",(req,res)=>res.status(404).json({message:"Push lab has no order, product, payment or waiter API"}));

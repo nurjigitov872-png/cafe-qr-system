@@ -1,6 +1,6 @@
-export const API=import.meta.env.VITE_API_URL||"https://cafe-backend-weo1.onrender.com/api";
-export const SOCKET=import.meta.env.VITE_SOCKET_URL||new URL(API).origin;
-export async function notificationRequest(token,path="",options={}){const response=await fetch(API+"/notifications"+path,{...options,headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},...(options.body?{body:JSON.stringify(options.body)}:{})});const data=await response.json();if(!response.ok){const error=new Error("Notification request failed");error.code=data.code;error.status=response.status;throw error;}return data;}
+import { API, SOCKET } from "../config/connections.js";
+export { API, SOCKET };
+export async function notificationRequest(token,path="",options={}){const response=await fetch(API+"/notifications"+path,{...options,redirect:"error",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},...(options.body?{body:JSON.stringify(options.body)}:{})});const data=await response.json();if(!response.ok){const error=new Error("Notification request failed");error.code=data.code;error.status=response.status;throw error;}return data;}
 export const supportsPush=(scope=window)=>!!(scope.isSecureContext&&scope.Notification&&scope.PushManager&&scope.navigator.serviceWorker);
 export function applicationKey(value){const raw=atob(value.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-value.length%4)%4));return Uint8Array.from(raw,c=>c.charCodeAt(0));}
 // Called only by the explicit button; permission is requested before any await.

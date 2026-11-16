@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 
-const issuer = "cafe-qr-backend";
+const issuer = () => ["local", "staging", "push-lab"].includes(process.env.APP_ENV)
+  ? "cafe-qr-backend:" + process.env.APP_ENV : "cafe-qr-backend";
 const audience = "cafe-qr-api";
 
 const getSecret = () => {
@@ -10,11 +11,11 @@ const getSecret = () => {
 };
 
 const signToken = (claims, subject) => jwt.sign(claims, getSecret(), {
-  algorithm: "HS256", issuer, audience, subject: String(subject), expiresIn: "7d",
+  algorithm: "HS256", issuer: issuer(), audience, subject: String(subject), expiresIn: "7d",
 });
 
 const verifyToken = (token) => {
-  const claims = jwt.verify(token, getSecret(), { algorithms: ["HS256"], issuer, audience });
+  const claims = jwt.verify(token, getSecret(), { algorithms: ["HS256"], issuer: issuer(), audience });
   if (!claims || typeof claims !== "object" || !Number.isFinite(claims.exp) || !claims.sub) {
     throw new Error("Invalid token claims");
   }

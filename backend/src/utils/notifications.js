@@ -1,4 +1,5 @@
 const crypto=require("node:crypto");
+const {pushAllowed}=require("../config/integrations");
 const Notification=require("../models/Notification");
 const Subscription=require("../models/PushSubscription");
 const Read=require("../models/NotificationRead");
@@ -6,7 +7,7 @@ const {eventFor}=require("./notificationPolicy");
 const messages={ky:{"order.new":"Жаңы заказ түштү","waiter.called":"Официант чакырылды",ready:"Заказыңыз даяр",served:"Заказыңыз берилди",status:"Заказдын статусу өзгөрдү"},ru:{"order.new":"Новый заказ","waiter.called":"Вызов официанта",ready:"Ваш заказ готов",served:"Ваш заказ подан",status:"Статус заказа изменён"},en:{"order.new":"New order","waiter.called":"Waiter requested",ready:"Your order is ready",served:"Your order has been served",status:"Order status updated"},tr:{"order.new":"Yeni sipariş","waiter.called":"Garson çağrıldı",ready:"Siparişiniz hazır",served:"Siparişiniz servis edildi",status:"Sipariş durumu güncellendi"}};
 const hash=value=>crypto.createHash("sha256").update(value).digest("hex");
 function createNotifications(io,{NotificationModel=Notification,SubscriptionModel=Subscription,ReadModel=Read,transport=require("web-push"),env=process.env}={}){
- let configured=!!(env.VAPID_PUBLIC_KEY&&env.VAPID_PRIVATE_KEY&&env.VAPID_SUBJECT);
+ let configured=pushAllowed(env)&&!!(env.VAPID_PUBLIC_KEY&&env.VAPID_PRIVATE_KEY&&env.VAPID_SUBJECT);
  if(configured){try{transport.setVapidDetails(env.VAPID_SUBJECT,env.VAPID_PUBLIC_KEY,env.VAPID_PRIVATE_KEY);}catch{configured=false;console.error("Push configuration invalid; in-app notifications remain available.");}}
  async function publish(kind,record){
   try{

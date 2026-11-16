@@ -1,6 +1,7 @@
 import { emitOrderStatus } from "../notifications/events.js";
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://cafe-backend-weo1.onrender.com/api";
+import { API as API_URL } from "../config/connections.js";
+
+const request = (url, options = {}) => fetch(url, { ...options, redirect: "error" });
 
 const parseResponse = async (res) => {
   const data = await res.json().catch(() => ({}));
@@ -38,7 +39,7 @@ export const authHeaders = () => {
 };
 
 export const fetchProducts = async (params = {}) => {
-  const res = await fetch(`${API_URL}/products${buildQuery(params)}`);
+  const res = await request(`${API_URL}/products${buildQuery(params)}`);
   return parseResponse(res);
 };
 
@@ -55,7 +56,7 @@ const orderHeaders = (id) => {
 };
 
 export const createOrder = async (orderData) => {
-  const res = await fetch(`${API_URL}/orders`, {
+  const res = await request(`${API_URL}/orders`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -67,7 +68,7 @@ export const createOrder = async (orderData) => {
 };
 
 export const submitOrder = async (order) => {
-  const res = await fetch(`${API_URL}/orders`, {
+  const res = await request(`${API_URL}/orders`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -79,12 +80,12 @@ export const submitOrder = async (order) => {
 };
 
 export const getOrderById = async (id) => {
-  const res = await fetch(`${API_URL}/orders/${id}`, { headers: orderHeaders(id) });
+  const res = await request(`${API_URL}/orders/${id}`, { headers: orderHeaders(id) });
   return parseResponse(res);
 };
 
 export const cancelOrder = async (id) => {
-  const res = await fetch(`${API_URL}/orders/${id}/cancel`, {
+  const res = await request(`${API_URL}/orders/${id}/cancel`, {
     method: "PATCH",
     headers: orderHeaders(id),
   });
@@ -93,7 +94,7 @@ export const cancelOrder = async (id) => {
 };
 
 export const loginAdmin = async (username, password) => {
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await request(`${API_URL}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -105,7 +106,7 @@ export const loginAdmin = async (username, password) => {
 };
 
 export const fetchMe = async () => {
-  const res = await fetch(`${API_URL}/auth/me`, {
+  const res = await request(`${API_URL}/auth/me`, {
     headers: {
       ...authHeaders(),
     },
@@ -115,7 +116,7 @@ export const fetchMe = async () => {
 };
 
 export const fetchOrders = async (params = {}) => {
-  const res = await fetch(`${API_URL}/orders${buildQuery(params)}`, {
+  const res = await request(`${API_URL}/orders${buildQuery(params)}`, {
     headers: {
       ...authHeaders(),
     },
@@ -125,7 +126,7 @@ export const fetchOrders = async (params = {}) => {
 };
 
 export const updateOrderStatus = async (id, status) => {
-  const res = await fetch(`${API_URL}/orders/${id}/status`, {
+  const res = await request(`${API_URL}/orders/${id}/status`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -138,7 +139,7 @@ export const updateOrderStatus = async (id, status) => {
 };
 
 export const fetchDashboard = async () => {
-  const res = await fetch(`${API_URL}/orders/dashboard/stats`, {
+  const res = await request(`${API_URL}/orders/dashboard/stats`, {
     headers: {
       ...authHeaders(),
     },
@@ -148,7 +149,7 @@ export const fetchDashboard = async () => {
 };
 
 export const fetchWaiterCalls = async () => {
-  const res = await fetch(`${API_URL}/waiter-calls`, {
+  const res = await request(`${API_URL}/waiter-calls`, {
     headers: {
       ...authHeaders(),
     },
@@ -158,7 +159,7 @@ export const fetchWaiterCalls = async () => {
 };
 
 export const createWaiterCall = async (tableNumber) => {
-  const res = await fetch(`${API_URL}/waiter-calls`, {
+  const res = await request(`${API_URL}/waiter-calls`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -170,7 +171,7 @@ export const createWaiterCall = async (tableNumber) => {
 };
 
 export const completeWaiterCall = async (id) => {
-  const res = await fetch(`${API_URL}/waiter-calls/${id}/done`, {
+  const res = await request(`${API_URL}/waiter-calls/${id}/done`, {
     method: "PATCH",
     headers: {
       ...authHeaders(),
@@ -181,7 +182,7 @@ export const completeWaiterCall = async (id) => {
 };
 
 export const createProduct = async (payload) => {
-  const res = await fetch(`${API_URL}/products`, {
+  const res = await request(`${API_URL}/products`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -194,7 +195,7 @@ export const createProduct = async (payload) => {
 };
 
 export const updateProduct = async (id, payload) => {
-  const res = await fetch(`${API_URL}/products/${id}`, {
+  const res = await request(`${API_URL}/products/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -207,7 +208,7 @@ export const updateProduct = async (id, payload) => {
 };
 
 export const deleteProduct = async (id) => {
-  const res = await fetch(`${API_URL}/products/${id}`, {
+  const res = await request(`${API_URL}/products/${id}`, {
     method: "DELETE",
     headers: {
       ...authHeaders(),
@@ -218,7 +219,7 @@ export const deleteProduct = async (id) => {
 };
 
 export const createPaymentSession = async (orderId) => {
-  const res = await fetch(`${API_URL}/payments/create-session`, {
+  const res = await request(`${API_URL}/payments/create-session`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -229,7 +230,7 @@ export const createPaymentSession = async (orderId) => {
   return parseResponse(res);
 };
 export const updateProductTranslations = async (id, translations) => {
-  const res = await fetch(`${API_URL}/products/${id}/translations`, {
+  const res = await request(`${API_URL}/products/${id}/translations`, {
     method: "PATCH", headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(translations),
   });

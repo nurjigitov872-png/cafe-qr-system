@@ -1,0 +1,18 @@
+# Template only. Never put actual secrets into Git. No service is provisioned by this file.
+# Select APP_ENV=staging or production in the hosting environment before startup.
+NODE_ENV=production
+PORT=10000
+MONGO_URI=
+MONGO_EXPECTED_HOST=
+MONGO_EXPECTED_DATABASE=
+# Staging database name must end with _staging; use separately permissioned DB users.
+CLIENT_URL=
+CORS_ORIGIN=
+ADMIN_USERNAME=
+ADMIN_PASSWORD=
+JWT_SECRET=
+TELEGRAM_ENABLED=false
+WEB_PUSH_ENABLED=false
+PUSH_TEST_ENABLED=false
+# Set flags true only with independently verified environment-specific credentials.
+# If disabled, remove TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID and VAPID_* values entirely.

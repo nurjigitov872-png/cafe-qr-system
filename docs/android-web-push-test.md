@@ -28,9 +28,15 @@ VAPID_PRIVATE_KEY серверде гана калат. Frontend конфигу�
 Төмөнкү эки public URL сиздин PUSH_LAB_ORIGIN'ге так дал келсин. Алар сыр эмес. Чыныгы Render/Vercel URL'дерин колдонбоңуз.
 
 ```powershell
+$env:VITE_APP_ENV = 'push-lab'
+$env:VITE_BACKEND_ORIGIN = 'https://push-test.YOUR-DOMAIN'
+$env:VITE_FRONTEND_ORIGIN = 'https://push-test.YOUR-DOMAIN'
 $env:VITE_API_URL = 'https://push-test.YOUR-DOMAIN/api'
 $env:VITE_SOCKET_URL = 'https://push-test.YOUR-DOMAIN'
 npm --prefix frontend run build -- --outDir dist/push-lab
+Remove-Item Env:VITE_APP_ENV
+Remove-Item Env:VITE_BACKEND_ORIGIN
+Remove-Item Env:VITE_FRONTEND_ORIGIN
 Remove-Item Env:VITE_API_URL
 Remove-Item Env:VITE_SOCKET_URL
 node backend/scripts/push-lab.cjs

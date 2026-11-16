@@ -1,6 +1,7 @@
 // Isolated local demo: no dotenv, MongoDB connection, Telegram or real push.
 const http=require("node:http"),crypto=require("node:crypto"),path=require("node:path");
 const {pathToFileURL}=require("node:url");
+process.env.APP_ENV="local";
 process.env.JWT_SECRET=crypto.randomBytes(48).toString("hex");
 process.env.ADMIN_USERNAME="notification-demo-admin";
 const {Server}=require("socket.io");
@@ -35,7 +36,7 @@ app.get("/",(req,res)=>res.type("html").send(`<!doctype html><meta charset="utf-
 let vite;
 (async()=>{
  await new Promise((resolve,reject)=>{server.once("error",reject);server.listen(10001,"127.0.0.1",resolve);});
- process.env.VITE_API_URL="http://localhost:10001/api";process.env.VITE_SOCKET_URL="http://localhost:10001";
+ process.env.VITE_APP_ENV="local";process.env.VITE_API_URL="http://localhost:10001/api";process.env.VITE_SOCKET_URL="http://localhost:10001";
  const {createServer}=await import(pathToFileURL(path.join(frontend,"node_modules/vite/dist/node/index.js")).href);
  const react=(await import(pathToFileURL(require.resolve(path.join(frontend,"node_modules/@vitejs/plugin-react"))).href)).default;
  const bootstrap={name:"mock-notification-bootstrap",configureServer(dev){dev.middlewares.use((req,res,next)=>{if(!req.url.startsWith("/notification-preview"))return next();const view=new URL(req.url,"http://localhost:5174").searchParams.get("view");const target=view==="kitchen"?"/admin/kitchen":view==="waiter"?"/admin/waiter":"/my-order/"+id;res.setHeader("Content-Type","text/html; charset=utf-8");res.end('<!doctype html><script>localStorage.setItem("admin_token",'+JSON.stringify(admin)+');localStorage.setItem("order_token_'+id+'",'+JSON.stringify(customer)+');location.replace('+JSON.stringify(target)+');</script>');});}};

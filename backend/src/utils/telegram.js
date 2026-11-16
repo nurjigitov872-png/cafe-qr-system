@@ -1,4 +1,4 @@
-const TelegramBot = require("node-telegram-bot-api");
+const { telegramAllowed } = require("../config/integrations");
 
 let bot = null;
 let botToken = null;
@@ -24,6 +24,7 @@ const reportTelegramError = (error) => {
 };
 
 const checkTelegramConfig = () => {
+  if (!telegramAllowed(process.env)) return false;
   const { token, chatId } = getConfig();
   const missing = [];
   if (!token) missing.push("TELEGRAM_BOT_TOKEN");
@@ -40,6 +41,7 @@ const sendTelegramMessage = async (text) => {
     if (!checkTelegramConfig()) return false;
     const { token, chatId } = getConfig();
     if (!bot || token !== botToken) {
+      const TelegramBot = require("node-telegram-bot-api");
       bot = new TelegramBot(token, { polling: false, request: { timeout: 10000 } });
       botToken = token;
     }

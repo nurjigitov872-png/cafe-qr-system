@@ -36,3 +36,6 @@
 
 ## Практикалык чектер
 Бир backend instance үчүн Socket.IO даяр. Бир нече instance болгондо room/event бөлүшүү үчүн Redis adapter сыяктуу орток transport керек. Push жөнөтүү азыр сакталган окуядан кийин жасалат: provider/network ката берсе логдо сырсыз белги калат, inbox окуясы сакталат; туруктуу retry queue кошулган жок. MongoDB иштебей калса notification катмары заказдын сакталганын катага айлантпайт, бирок ал учурдун notification тарыхын калыбына келтирүүгө durable outbox керек. Бул WhatsApp деңгээлиндеги жеткирүү кепилдиги эмес.
+
+
+API/Socket ????? ???????: [connection-safety.md](connection-safety.md). VITE_APP_ENV ?????????; production fallback ???. Local backend ??????????????? ?????? ????????? ??????????.
