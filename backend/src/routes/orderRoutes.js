@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
+const { pickupEnabled, pickupOrderView } = require("../utils/pickup");
 const { InvalidOrder, priceOrder } = require("../utils/orderPricing");
 const { requireAdmin, requireOrderAccess, signToken, getSecret } = require("../middleware/auth");
 const { sendOrderNotification } = require("../utils/telegram");
@@ -76,6 +77,15 @@ router.get("/:id", requireOrderAccess, async (req, res) => {
       return res.status(404).json({ message: "Заказ табылган жок" });
     }
 
+    if (order.channel === "pickup") {
+      res.set("Cache-Control", "no-store");
+      if (!pickupEnabled() || !req.app.get("pickupReady")) return res.status(404).json({ message: "Заказ табылган жок" });
+      const owner = req.auth.role === "customer";
+      const ready = owner && order.status === "ready"
+        ? await Order.findOne({ _id: order._id, channel: "pickup", status: "ready" }).select("+pickupCode")
+        : null;
+      return res.json(pickupOrderView(ready || order, Boolean(ready)));
+    }
     res.json(order);
   } catch (error) {
     console.error("GET ORDER ERROR:");
@@ -143,13 +153,26 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
       ? req.body.status
       : "pending";
 
-    // Atomic guard: retrying the same status must not emit a second notification.
-    const changed = await Order.findOneAndUpdate(
-      { _id: req.params.id, status: { $ne: status } },
+    // Keep the existing QR status update atomic and route Pickup through its own transitions.
+    let changed = await Order.findOneAndUpdate(
+      { _id: req.params.id, channel: { $ne: "pickup" }, status: { $ne: status } },
       { status },
-      { new: true }
+      { new: true },
     );
-    const order = changed || await Order.findById(req.params.id);
+    const current = changed || await Order.findById(req.params.id);
+    if (current?.channel === "pickup") {
+      if (!pickupEnabled() || !req.app.get("pickupReady")) return res.sendStatus(404);
+      if (status === current.status) return res.json(current);
+      const transitions = { pending: ["preparing", "cancelled"], preparing: ["ready", "cancelled"], ready: ["cancelled"] };
+      if (!transitions[current.status]?.includes(status)) return res.status(409).json({ message: "Pickup status transition rejected" });
+      changed = await Order.findOneAndUpdate(
+        { _id: req.params.id, channel: "pickup", status: current.status },
+        { $set: { status }, ...(status === "cancelled" && { $unset: { pickupContact: 1 } }) },
+        { new: true },
+      );
+      if (!changed) return res.status(409).json({ message: "Pickup status changed" });
+    }
+    const order = changed || current;
 
     if (!order) {
       return res.status(404).json({ message: "Заказ табылган жок" });
@@ -158,8 +181,11 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
     if (!changed) return res.json(order);
     const io = req.app.get("io");
     if (io) {
-      io.to(["admin", "kitchen", "waiter"]).emit("order:updated", order);
-      io.to(["admin", "kitchen", "waiter"]).emit("order-updated", order);
+      const pickup = order.channel === "pickup";
+      const staff = pickup ? ["admin", "kitchen"] : ["admin", "kitchen", "waiter"];
+      const eventOrder = pickup ? pickupOrderView(order) : order;
+      io.to(staff).emit("order:updated", eventOrder);
+      io.to(staff).emit("order-updated", eventOrder);
     }
 
     await req.app.get("notifications")?.publish("order.status", order);
@@ -173,8 +199,9 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
 router.patch("/:id/cancel", requireOrderAccess, async (req, res) => {
   try {
     const order = await Order.findOneAndUpdate(
-      { _id: req.params.id, status: "pending" },
-      { status: "cancelled" },
+      { _id: req.params.id, status: "pending",
+        ...(!pickupEnabled() || !req.app.get("pickupReady") ? { channel: { $ne: "pickup" } } : {}) },
+      { $set: { status: "cancelled" }, $unset: { pickupContact: 1 } },
       { new: true }
     );
 
@@ -184,8 +211,11 @@ router.patch("/:id/cancel", requireOrderAccess, async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-      io.to(["admin", "kitchen", "waiter"]).emit("order:updated", order);
-      io.to(["admin", "kitchen", "waiter"]).emit("order-updated", order);
+      const pickup = order.channel === "pickup";
+      const staff = pickup ? ["admin", "kitchen"] : ["admin", "kitchen", "waiter"];
+      const eventOrder = pickup ? pickupOrderView(order) : order;
+      io.to(staff).emit("order:updated", eventOrder);
+      io.to(staff).emit("order-updated", eventOrder);
     }
 
     await req.app.get("notifications")?.publish("order.status", order);

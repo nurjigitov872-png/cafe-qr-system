@@ -38,14 +38,15 @@ export function CafeEmpty({
 export function CafeFrame({
   children,
   table = 1,
-  menuSuffix = ""
+  menuSuffix = "",
+  menuPath
 }) {
   const {
     t,
     language,
     theme
   } = useCustomerPreferences();
-  return <div className="cafe-customer cafe-result-page" lang={language} data-theme={theme}><header className="cafe-result-header"><Link to={"/table/" + table + menuSuffix} aria-label={t("Менюга кайтуу")}><CafeBrand /></Link><CafePreferences /></header><main className="cafe-result-main">{children}</main><footer className="cafe-footer">{t("Жакшы даам. Жылуу маанай.")}</footer></div>;
+  return <div className="cafe-customer cafe-result-page" lang={language} data-theme={theme}><header className="cafe-result-header"><Link to={menuPath || "/table/" + table + menuSuffix} aria-label={t("Менюга кайтуу")}><CafeBrand /></Link><CafePreferences /></header><main className="cafe-result-main">{children}</main><footer className="cafe-footer">{t("Жакшы даам. Жылуу маанай.")}</footer></div>;
 }
 export const CUSTOMER_STATUSES = {
   pending: "Күтүлүүдө",

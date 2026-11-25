@@ -18,6 +18,7 @@ import AdminTables from "./pages/AdminTables";
 import { reservationsEnabled } from "./config/reservations";
 import ReservationPage from "./pages/ReservationPage";
 import AdminReservations from "./pages/AdminReservations";
+import { pickupEnabled } from "./config/pickup";
 
 function RequireAdmin({ children }) {
   const token = localStorage.getItem("admin_token");
@@ -29,7 +30,8 @@ export default function App() {
   return (
     <><NotificationCenter /><Routes>
       <Route path="/" element={<Navigate to="/table/1" replace />} />
-      <Route path="/table/:tableId" element={<MenuPage />} />
+      <Route path="/table/:tableId" element={<MenuPage key="table-menu" />} />
+      {pickupEnabled && <Route path="/pickup" element={<MenuPage key="pickup-menu" pickup />} />}
       {reservationsEnabled && <Route path="/reservation" element={<ReservationPage />} />}
       {reservationsEnabled && <Route path="/admin/reservations" element={<RequireAdmin><AdminReservations /></RequireAdmin>} />}
       <Route path="/success" element={<SuccessPage />} />

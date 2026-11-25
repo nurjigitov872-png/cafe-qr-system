@@ -94,6 +94,8 @@ function startServer(config) {
   app.use("/api/products", productRoutes);
   app.use("/api/orders", orderRoutes);
   app.use("/api/waiter-calls", waiterCallRoutes);
+  const pickupActive = config.appEnv === "staging" && process.env.PICKUP_ENABLED === "true";
+  if (pickupActive) app.use("/api/checkout/pickup", require("./routes/pickupRoutes"));
   const reservationsEnabled = config.appEnv === "staging" && process.env.RESERVATIONS_ENABLED === "true";
   if (reservationsEnabled) app.use("/api/reservations", require("./routes/reservationRoutes"));
 
@@ -114,6 +116,15 @@ function startServer(config) {
           app.set("reservationsReady", true);
         } catch {
           console.warn("Reservations unavailable. Check the contact key, MongoDB transactions and indexes.");
+        }
+      }
+
+      if (pickupActive) {
+        try {
+          await require("./utils/pickup").initializePickup();
+          app.set("pickupReady", true);
+        } catch {
+          console.warn("Pickup unavailable. Check the pickup contact key and MongoDB indexes.");
         }
       }
 

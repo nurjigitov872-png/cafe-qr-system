@@ -1,3 +1,6 @@
+import { bookingTime } from "../services/reservations";
+import { pickupLabel } from "../i18n/pickup";
+import { pickupEnabled } from "../config/pickup";
 import useCustomerPreferences from "../i18n/useCustomerPreferences";
 import { localizedField } from "../i18n/customer";
 import React, { useCallback, useEffect, useState } from "react";
@@ -42,8 +45,12 @@ export default function MyOrderPage({
     load();
   }, [load]);
   useEffect(() => {
-    const update = event => { if (event.detail?.orderId === orderId) setOrder(current => current ? { ...current, status:event.detail.status } : current); };
     const refresh = () => { if (orderId) getOrderById(orderId).then(setOrder).catch(() => {}); };
+    const update = event => {
+      if (event.detail?.orderId !== orderId) return;
+      setOrder(current => current ? { ...current, status: event.detail.status } : current);
+      if (pickupEnabled && event.detail.status === "ready") refresh();
+    };
     window.addEventListener("cafe:order-status",update);window.addEventListener("cafe:order-refresh",refresh);
     const timer=setInterval(refresh,30000);
     return()=>{clearInterval(timer);window.removeEventListener("cafe:order-status",update);window.removeEventListener("cafe:order-refresh",refresh);};
@@ -62,9 +69,12 @@ export default function MyOrderPage({
     }
   };
   const table = order?.tableNumber || localStorage.getItem("lastOrderTable") || 1;
-  return <CafeFrame table={table}><section className="cafe-result-card cafe-tracking"><span className="cafe-eyebrow">{t("СИЗДИН ЗАКАЗ")}</span><h1>{paymentReturn ? t("Заказ жана төлөм") : t("Менин заказым")}</h1>{loading && <p className="cafe-menu-loading" role="status"><span className="cafe-spinner" />{t("Маалымат жүктөлүүдө…")}</p>}{error && <div className="cafe-alert" role="alert">{t(error)}</div>}{!orderId && <CafeEmpty title={t("Заказ табылган жок")} detail={t("Менюдан товар тандап, заказ берсеңиз болот.")} />}{order && <><div className="cafe-tracking-header"><span>№{String(order._id).slice(-6).toUpperCase()} · {t("Стол")} №{order.tableNumber}</span><span className={"cafe-status cafe-status-" + order.status}>{t(CUSTOMER_STATUSES[order.status] || t("Статус белгисиз"))}</span></div><p className="cafe-tracking-type">{{
+  const pickup = pickupEnabled && order?.channel === "pickup";
+  const pickupPath = pickup ? "/pickup" : undefined;
+  return <CafeFrame table={table} menuPath={pickupPath}><section className="cafe-result-card cafe-tracking"><span className="cafe-eyebrow">{t("СИЗДИН ЗАКАЗ")}</span><h1>{paymentReturn ? t("Заказ жана төлөм") : t("Менин заказым")}</h1>{loading && <p className="cafe-menu-loading" role="status"><span className="cafe-spinner" />{t("Маалымат жүктөлүүдө…")}</p>}{error && <div className="cafe-alert" role="alert">{t(error)}</div>}{!orderId && <CafeEmpty title={t("Заказ табылган жок")} detail={t("Менюдан товар тандап, заказ берсеңиз болот.")} />}{order && <><div className="cafe-tracking-header"><span>№{String(order._id).slice(-6).toUpperCase()} · {pickup ? pickupLabel(language, "title") : t("Стол") + " №" + order.tableNumber}</span><span className={"cafe-status cafe-status-" + order.status}>{t(CUSTOMER_STATUSES[order.status] || t("Статус белгисиз"))}</span></div>{pickup && <p>{pickupLabel(language, "time")} · {new Intl.DateTimeFormat(language, { timeZone: "Asia/Bishkek", dateStyle: "medium" }).format(new Date(order.scheduledFor))} · {bookingTime(order.scheduledFor, language)} (UTC+6)</p>}
+          {pickup && order.status === "ready" && order.pickupCode && <p><strong>{pickupLabel(language, "code")} · {order.pickupCode}</strong></p>}<p className="cafe-tracking-type">{{
             dinein: t("Залда"),
             takeaway: t("Алып кетүү"),
             delivery: t("Жеткирүү")
-          }[order.orderType] || ""}</p><ul className="cafe-tracking-items">{(order.items || []).map((item, index) => <li key={index}><div><strong>{localizedField(item, "name", language)} × {item.qty}</strong>{Object.keys(item.selectedOptions || {}).length > 0 && <small>{Object.entries(item.selectedOptions).map(([key, value]) => key + ": " + value).join(" · ")}</small>}</div><span>{money(item.price * item.qty)}</span></li>)}</ul>{order.comment && <p className="cafe-tracking-comment"><strong>{t("Комментарий: ")}</strong>{order.comment}</p>}<div className="cafe-cart-total"><span>{t("Жалпы сумма")}</span><strong>{money(order.totalAmount)}</strong></div><div className="cafe-payment-state"><span>{t(CUSTOMER_PAYMENTS[order.paymentMethod] || t("Төлөм ыкмасы"))}</span><strong>{t(CUSTOMER_PAYMENTS[order.paymentStatus] || t("Төлөм статусу белгисиз"))}</strong></div>{paymentReturn && order.paymentStatus !== "paid" && <p className="cafe-payment-note">{t("Төлөмдүн ийгиликтүү аяктаганы азырынча ырасталган жок. Официанттан тактап алыңыз.")}</p>}</>}<div className="cafe-result-actions">{orderId && <button className="cafe-button cafe-button-outline" disabled={loading || cancelLoading} onClick={load}>{t("Статусту жаңыртуу")}</button>}{order?.status === "pending" && <button className="cafe-button cafe-button-danger" onClick={cancel} disabled={cancelLoading || loading}>{cancelLoading ? t("Жокко чыгарылууда…") : t("Заказды жокко чыгаруу")}</button>}<Link className="cafe-button cafe-button-primary" to={"/table/" + table}>{t("Менюга кайтуу")}<CafeIcon name="arrow" /></Link></div></section></CafeFrame>;
+          }[order.orderType] || ""}</p><ul className="cafe-tracking-items">{(order.items || []).map((item, index) => <li key={index}><div><strong>{localizedField(item, "name", language)} × {item.qty}</strong>{Object.keys(item.selectedOptions || {}).length > 0 && <small>{Object.entries(item.selectedOptions).map(([key, value]) => key + ": " + value).join(" · ")}</small>}</div><span>{money(item.price * item.qty)}</span></li>)}</ul>{order.comment && <p className="cafe-tracking-comment"><strong>{t("Комментарий: ")}</strong>{order.comment}</p>}<div className="cafe-cart-total"><span>{t("Жалпы сумма")}</span><strong>{money(order.totalAmount)}</strong></div><div className="cafe-payment-state"><span>{t(CUSTOMER_PAYMENTS[order.paymentMethod] || t("Төлөм ыкмасы"))}</span><strong>{t(CUSTOMER_PAYMENTS[order.paymentStatus] || t("Төлөм статусу белгисиз"))}</strong></div>{paymentReturn && order.paymentStatus !== "paid" && <p className="cafe-payment-note">{t("Төлөмдүн ийгиликтүү аяктаганы азырынча ырасталган жок. Официанттан тактап алыңыз.")}</p>}</>}<div className="cafe-result-actions">{orderId && <button className="cafe-button cafe-button-outline" disabled={loading || cancelLoading} onClick={load}>{t("Статусту жаңыртуу")}</button>}{order?.status === "pending" && <button className="cafe-button cafe-button-danger" onClick={cancel} disabled={cancelLoading || loading}>{cancelLoading ? t("Жокко чыгарылууда…") : t("Заказды жокко чыгаруу")}</button>}<Link className="cafe-button cafe-button-primary" to={pickupPath || "/table/" + table}>{t("Менюга кайтуу")}<CafeIcon name="arrow" /></Link></div></section></CafeFrame>;
 }

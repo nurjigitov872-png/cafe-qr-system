@@ -1,3 +1,6 @@
+import { pickupEnabled } from "../config/pickup";
+import { pickupLabel } from "../i18n/pickup";
+import useCustomerPreferences from "../i18n/useCustomerPreferences";
 import React, { useEffect, useRef, useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { DataNotice, EmptyState, Icon, RefreshButton, StatusBadge } from "../components/AdminUI";
@@ -7,6 +10,7 @@ import useAdminData from "./useAdminData";
 const EVENTS = ["order:new", "order:updated"];
 
 export default function AdminKitchen() {
+  const { language } = useCustomerPreferences();
   const { data, loading, error, load, updateItem } = useAdminData(fetchOrders, EVENTS);
   const [busy, setBusy] = useState("");
   const [actionError, setActionError] = useState("");
@@ -38,18 +42,19 @@ export default function AdminKitchen() {
         <div className="pos-board-heading"><h2><StatusBadge status={status} /></h2><span className="pos-count">{orders.length}</span></div>
         {orders.length ? orders.map(order => {
           const wait = kitchenWait(order.createdAt, now);
-          const next = KITCHEN_NEXT[status];
-          const secondary = Object.keys(KITCHEN_ACTIONS).filter(target => target !== status && target !== next);
+          const pickup = pickupEnabled && order.channel === "pickup";
+          const next = pickup && status === "ready" ? null : KITCHEN_NEXT[status];
+          const secondary = Object.keys(KITCHEN_ACTIONS).filter(target => !pickup && target !== status && target !== next);
           return <article className={"pos-panel pos-kitchen-card pos-kitchen-card--" + status} key={order._id}>
-            <div className="pos-panel-heading"><div><h3>Стол №{order.tableNumber}</h3><p>№{String(order._id).slice(-6).toUpperCase()}</p></div><Icon name="clock" size={17} /></div>
-            <time className="pos-order-time" dateTime={order.createdAt}>{formatDate(order.createdAt)}</time>
+            <div className="pos-panel-heading"><div><h3>{pickup ? pickupLabel(language, "title") : "Стол №" + order.tableNumber}</h3><p>№{String(order._id).slice(-6).toUpperCase()}</p></div><Icon name="clock" size={17} /></div>
+            <time className="pos-order-time" dateTime={pickup ? order.scheduledFor : order.createdAt}>{formatDate(pickup ? order.scheduledFor : order.createdAt)}</time>
             {wait && <span className={"pos-wait-time pos-wait-time--" + wait.level}><Icon name="clock" size={14} />{wait.minutes} мүнөт күттү{wait.level === "urgent" && " · Көптөн күтүлүүдө"}</span>}
             <ul>{(order.items || []).map((item, index) => <li key={index}><span>{item.name}</span><strong>× {item.qty}</strong></li>)}</ul>
             {order.comment && <p className="pos-order-comment">{order.comment}</p>}
             <p className="pos-order-total">{money(order.totalAmount)}</p>
             <div className="pos-kitchen-actions">
-              <button className="pos-button pos-button--primary" disabled={!!busy} onClick={() => update(order._id, next)}>{busy === order._id ? "Сакталууда…" : KITCHEN_ACTIONS[next]}</button>
-              <details className="pos-secondary-actions"><summary>Кошумча аракеттер</summary><div>{secondary.map(target => <button key={target} className="pos-button pos-button--quiet" disabled={!!busy} onClick={() => update(order._id, target)}>{KITCHEN_ACTIONS[target]}</button>)}</div></details>
+              {next && <button className="pos-button pos-button--primary" disabled={!!busy} onClick={() => update(order._id, next)}>{busy === order._id ? "Сакталууда…" : KITCHEN_ACTIONS[next]}</button>}
+              {secondary.length > 0 && <details className="pos-secondary-actions"><summary>Кошумча аракеттер</summary><div>{secondary.map(target => <button key={target} className="pos-button pos-button--quiet" disabled={!!busy} onClick={() => update(order._id, target)}>{KITCHEN_ACTIONS[target]}</button>)}</div></details>}
             </div>
           </article>;
         }) : <EmptyState icon="kitchen" title="Кезек бош" detail="Бул статустагы заказдар ушул жерде көрүнөт." />}

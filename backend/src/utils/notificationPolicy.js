@@ -11,9 +11,10 @@ function socketAuth(socket,next){try{socket.data.notificationIdentity=identity(s
 function connectSocket(socket){const user=socket.data.notificationIdentity;for(const room of user.audiences)socket.join(room);const timer=setTimeout(()=>socket.disconnect(true),Math.max(0,user.exp*1000-Date.now()));timer.unref?.();socket.on("disconnect",()=>clearTimeout(timer));}
 function eventFor(kind,record){
  const id=String(record._id),status=record.status;
- const audiences=kind==="waiter.called"?["admin","waiter"]:kind==="order.new"?["admin","kitchen","waiter"]:["admin","kitchen","waiter","order:"+id];
+ const staff=record.channel==="pickup"?["admin","kitchen"]:["admin","kitchen","waiter"];
+ const audiences=kind==="waiter.called"?["admin","waiter"]:kind==="order.new"?staff:[...staff,"order:"+id];
  const version=kind==="order.status"?":"+status+":"+(record.updatedAt?new Date(record.updatedAt).toISOString():status):"";
- return {key:kind+":"+id+version,kind,audiences,...(kind.startsWith("order.")?{orderId:id,status}:{}),tableNumber:Number(record.tableNumber),createdAt:new Date(),expiresAt:new Date(Date.now()+7*86400000)};
+ return {key:kind+":"+id+version,kind,audiences,...(kind.startsWith("order.")?{orderId:id,status}:{}),...(record.tableNumber != null ? {tableNumber:Number(record.tableNumber)} : {}),createdAt:new Date(),expiresAt:new Date(Date.now()+7*86400000)};
 }
 const endpointHosts=new Set(["fcm.googleapis.com","updates.push.services.mozilla.com","updates-autopush.stage.mozaws.net","web.push.apple.com","wns2-db5p.notify.windows.com"]);
 function validateSubscription(value){

@@ -9,7 +9,7 @@ const { createServer } = require("node:net");
 const mongoose = require("mongoose");
 
 const executable = process.env.RESERVATION_TEST_MONGOD;
-test("isolated MongoDB replica set enforces reservation transactions and access rules", { skip: !executable, timeout: 90_000 }, async () => {
+test("isolated MongoDB enforces reservation and pickup concurrency, access and order rules", { skip: !executable, timeout: 90_000 }, async () => {
   const socket = createServer();
   await new Promise(resolve => socket.listen(0, "127.0.0.1", resolve));
   const { port } = socket.address();
@@ -97,6 +97,101 @@ test("isolated MongoDB replica set enforces reservation transactions and access 
     assert.equal((await request("/admin/" + fresh.reservation.id, "PATCH", { status: "confirmed" }, admin)).status, 200);
     assert.equal((await request("/" + fresh.reservation.id + "/cancel", "PATCH", null, fresh.token)).status, 200);
     assert.equal(await TableSlot.countDocuments(), 0);
+
+    const Order = require("../src/models/Order");
+    const Product = require("../src/models/Product");
+    process.env.APP_ENV = "staging";
+    process.env.PICKUP_ENABLED = "true";
+    process.env.PICKUP_CONTACT_KEY = crypto.randomBytes(32).toString("hex");
+    await require("../src/utils/pickup").initializePickup();
+    const events = [];
+    const socketEvents = [];
+    const pickupApp = express();
+    pickupApp.use(express.json());
+    pickupApp.set("pickupReady", true);
+    pickupApp.set("io", { to: rooms => ({ emit: (event, payload) => socketEvents.push({ rooms, event, payload }) }) });
+    pickupApp.set("notifications", { publish: (kind, order) => events.push({ kind, order }) });
+    pickupApp.use("/pickup", require("../src/routes/pickupRoutes"));
+    pickupApp.use("/orders", require("../src/routes/orderRoutes"));
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+    server = pickupApp.listen(0, "127.0.0.1");
+    await new Promise(resolve => server.once("listening", resolve));
+    const pickupBase = "http://127.0.0.1:" + server.address().port;
+    const stagingAdmin = signToken({ role: "admin" }, process.env.ADMIN_USERNAME);
+    const product = await Product.create({ name: "Synthetic meal", price: 55, discountPrice: 45, category: "Tests" });
+    const checkout = { ...body, time: "10:00", paymentStatus: "paid", totalAmount: 1, items: [{ productId: String(product._id), qty: 2, price: 1 }] };
+    const key = crypto.randomUUID();
+    const call = (path, method = "GET", payload, token, requestKey) => fetch(pickupBase + path, {
+      method, headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: "Bearer " + token }),
+        ...(requestKey && { "Idempotency-Key": requestKey }),
+      }, body: payload && JSON.stringify(payload),
+    });
+    const [first, retry] = await Promise.all([
+      call("/pickup", "POST", checkout, null, key), call("/pickup", "POST", checkout, null, key),
+    ]);
+    assert.deepEqual([first.status, retry.status].sort(), [200, 201]);
+    const accepted = await first.json();
+    const orderId = accepted.order._id;
+    assert.equal((await retry.json()).order._id, orderId);
+    assert.equal(await Order.countDocuments(), 1);
+    assert.equal(accepted.order.tableNumber, undefined);
+    assert.equal(accepted.order.totalAmount, 90);
+    assert.equal(accepted.order.paymentStatus, "pending");
+    assert.equal(accepted.order.pickupCode, undefined);
+    const persisted = await Order.findById(orderId).select("+pickupContact +pickupCode").lean();
+    assert.equal(persisted.tableNumber, undefined);
+    assert.ok(!persisted.pickupContact.includes(body.phone));
+    assert.equal(events.filter(event => event.kind === "order.new").length, 1);
+    assert.equal(events[0].order.pickupCode, undefined);
+    assert.equal(events[0].order.pickupContact, undefined);
+    assert.equal((await call("/pickup", "POST", { ...checkout, name: "Different" }, null, key)).status, 409);
+    assert.equal((await call("/pickup/" + orderId + "/contact", "GET", null, accepted.orderToken)).status, 403);
+    assert.equal((await (await call("/pickup/" + orderId + "/contact", "GET", null, stagingAdmin)).json()).phone, body.phone);
+    const updatePath = "/orders/" + orderId + "/status";
+    assert.equal((await call(updatePath, "PATCH", { status: "served" }, stagingAdmin)).status, 409);
+    const collect = "/pickup/" + orderId + "/collect";
+    assert.equal((await call(collect, "PATCH", { code: persisted.pickupCode }, stagingAdmin)).status, 409);
+    for (const status of ["preparing", "ready"]) assert.equal((await call(updatePath, "PATCH", { status }, stagingAdmin)).status, 200);
+    const tracking = await call("/orders/" + orderId, "GET", null, accepted.orderToken);
+    assert.equal(tracking.headers.get("Cache-Control"), "no-store");
+    const ready = await tracking.json();
+    assert.equal(ready.pickupCode, persisted.pickupCode);
+    assert.equal((await (await call("/orders/" + orderId, "GET", null, stagingAdmin)).json()).pickupCode, undefined);
+    const otherOrder = signToken({ role: "customer" }, "000000000000000000000002");
+    assert.equal((await call("/orders/" + orderId, "GET", null, otherOrder)).status, 403);
+    assert.equal((await call(collect, "PATCH", { code: ready.pickupCode }, accepted.orderToken)).status, 403);
+    const wrongCode = ready.pickupCode === "0000000000" ? "FFFFFFFFFF" : "0000000000";
+    const guesses = await Promise.all(Array.from({ length: 5 }, () => call(collect, "PATCH", { code: wrongCode }, stagingAdmin)));
+    assert.deepEqual(guesses.map(response => response.status).sort(), [409, 409, 409, 409, 429]);
+    const locked = await call(collect, "PATCH", { code: ready.pickupCode }, stagingAdmin);
+    assert.equal(locked.status, 429);
+    assert.equal(locked.headers.get("Retry-After"), "900");
+    await Order.updateOne({ _id: orderId }, { pickupAttemptUntil: new Date(0) });
+    const collections = await Promise.all(Array.from({ length: 2 }, () => call(collect, "PATCH", { code: ready.pickupCode }, stagingAdmin)));
+    assert.deepEqual(collections.map(response => response.status).sort(), [200, 409]);
+    const listing = await (await call("/orders", "GET", null, stagingAdmin)).json();
+    assert.equal(listing[0].pickupCode, undefined);
+    assert.equal(listing[0].pickupContact, undefined);
+    assert.ok(socketEvents.some(event => event.event === "order:new"));
+    assert.ok(socketEvents.some(event => event.payload.status === "ready"));
+    assert.ok(socketEvents.some(event => event.payload.status === "served"));
+    for (const event of socketEvents) {
+      assert.deepEqual(event.rooms, ["admin", "kitchen"]);
+      const serialized = JSON.stringify(event.payload);
+      for (const value of ["pickupContact", "pickupCode", "pickupRequestKey", "pickupFingerprint", "pickupAttempts", body.phone, body.name, ready.pickupCode]) {
+        assert.ok(!serialized.includes(value));
+      }
+    }
+    assert.equal((await (await call("/orders/" + orderId, "GET", null, accepted.orderToken)).json()).pickupCode, undefined);
+    assert.equal((await call("/pickup/" + orderId + "/contact", "GET", null, stagingAdmin)).status, 404);
+    const second = await (await call("/pickup", "POST", checkout, null, crypto.randomUUID())).json();
+    const secondStored = await Order.findById(second.order._id).select("+pickupCode");
+    assert.notEqual(secondStored.pickupCode, persisted.pickupCode);
+    process.env.APP_ENV = "production";
+    assert.equal((await call("/pickup/times?day=" + day)).status, 404);
   } finally {
     if (server) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
     await mongoose.disconnect();
