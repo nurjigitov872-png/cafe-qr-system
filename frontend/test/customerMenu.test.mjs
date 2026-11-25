@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { selectCustomerMenu } from "../src/utils/customerMenu.js";
+import { customerMenuConfig, selectCustomerMenu } from "../src/utils/customerMenu.js";
 import { orderPayload } from "../src/utils/customerData.js";
 import { localizedField } from "../src/i18n/customer.js";
 const manifest = JSON.parse(fs.readFileSync(new URL("../src/data/menu15-draft.json", import.meta.url)));
@@ -13,6 +13,20 @@ test("normal customer menu selects 15 IDs; other catalog records remain untouche
  assert.deepEqual(result.map(p=>p._id),manifest.products.map(e=>e.productId));
  for(const group of ["Food","Drink","Dessert"]) assert.equal(result.filter(p=>p.category===group).length,5);
 });
+test("staging includes new visible products while production keeps the selected menu", () => {
+  const catalog = [
+    ...live(),
+    { _id: "new-product", name: "Лагман", available: true, hidden: false },
+    { _id: "hidden-product", available: true, hidden: true },
+    { _id: "unavailable-product", available: false, hidden: false },
+  ];
+  const staging = selectCustomerMenu(catalog, manifest, customerMenuConfig("staging"));
+  const production = selectCustomerMenu(catalog, manifest, customerMenuConfig("production"));
+
+  assert.deepEqual(staging.map(product => product._id), [...manifest.products.map(entry => entry.productId), "new-product"]);
+  assert.deepEqual(production.map(product => product._id), manifest.products.map(entry => entry.productId));
+});
+
 test("current API prices, images, IDs and raw options win; four display languages preserve payload", () => {
  const data=live();data[0].price=777;data[0].image="current.jpg";
  const menu=selectCustomerMenu(data,manifest);assert.equal(menu[0].price,777);assert.equal(menu[0].image,"current.jpg");

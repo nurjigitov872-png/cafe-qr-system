@@ -1,6 +1,10 @@
 // Frontend-only selection. Never deletes or updates catalog records.
 export const CUSTOMER_MENU = Object.freeze({ mode: "selected15", expectedCount: 15 });
 
+export function customerMenuConfig(appEnv) {
+  return appEnv === "staging" ? { mode: "all" } : CUSTOMER_MENU;
+}
+
 export function selectCustomerMenu(products, manifest, config = CUSTOMER_MENU) {
   if (config.mode === "all") return products.filter(p => !p.hidden && p.available !== false);
   const entries = manifest.products;

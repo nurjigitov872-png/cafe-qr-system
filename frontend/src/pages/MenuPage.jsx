@@ -1,4 +1,5 @@
-import { selectCustomerMenu } from "../utils/customerMenu";
+import { customerMenuConfig, selectCustomerMenu } from "../utils/customerMenu";
+import { connections } from "../config/connections.js";
 import PreviewCheckoutResult from "../components/PreviewCheckoutResult";
 import { validatePreviewCheckout } from "../utils/previewCheckout";
 import menu15Draft from "../data/menu15-draft.json";
@@ -55,7 +56,9 @@ export default function MenuPage() {
     try {
       const data = await fetchProducts();
       if (!Array.isArray(data)) throw new Error("Invalid menu");
-      setProducts(preview ? buildMenu15Preview(data, menu15Draft) : selectCustomerMenu(data, menu15Draft));
+      setProducts(preview
+        ? buildMenu15Preview(data, menu15Draft)
+        : selectCustomerMenu(data, menu15Draft, customerMenuConfig(connections.appEnv)));
     } catch {
       setMenuError("Менюну жүктөө мүмкүн болгон жок. Интернет байланышын текшерип, кайра аракет кылыңыз.");
     } finally {
