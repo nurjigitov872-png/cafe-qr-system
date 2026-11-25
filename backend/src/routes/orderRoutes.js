@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
+const { InvalidOrder, priceOrder } = require("../utils/orderPricing");
 const { requireAdmin, requireOrderAccess, signToken, getSecret } = require("../middleware/auth");
 const { sendOrderNotification } = require("../utils/telegram");
 
@@ -92,17 +93,7 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "Корзина бош" });
     }
 
-    const cleanItems = items.map((item) => ({
-      productId: item.productId || undefined,
-      name: String(item.name || "Товар"),
-      price: Number(item.price) || 0,
-      qty: Number(item.qty) || 1,
-      selectedOptions: item.selectedOptions || {},
-    }));
-
-    const totalAmount =
-      Number(body.totalAmount) ||
-      cleanItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+    const { items: cleanItems, totalAmount } = await priceOrder(items);
 
     const order = await Order.create({
       tableNumber: Number(body.tableNumber) || 1,
@@ -132,6 +123,7 @@ router.post("/", async (req, res) => {
     const orderToken = signToken({ role: "customer" }, order._id);
     res.status(201).json({ success: true, order, orderToken });
   } catch (error) {
+    if (error instanceof InvalidOrder) return res.status(400).json({ message: "Товар, саны же параметрлери жараксыз" });
     console.error("ORDER CREATE ERROR:");
     res.status(500).json({ message: "Заказ түзүү катасы" });
   }

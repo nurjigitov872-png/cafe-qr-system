@@ -94,6 +94,8 @@ function startServer(config) {
   app.use("/api/products", productRoutes);
   app.use("/api/orders", orderRoutes);
   app.use("/api/waiter-calls", waiterCallRoutes);
+  const reservationsEnabled = config.appEnv === "staging" && process.env.RESERVATIONS_ENABLED === "true";
+  if (reservationsEnabled) app.use("/api/reservations", require("./routes/reservationRoutes"));
 
   io.on("connection", connectSocket);
 
@@ -101,8 +103,19 @@ function startServer(config) {
 
   mongoose
     .connect(config.mongoUri, { serverSelectionTimeoutMS: 15000 })
-    .then(() => {
+    .then(async () => {
       console.log("MongoDB connected");
+
+      if (reservationsEnabled) {
+        try {
+          const reservations = require("./utils/reservations");
+          await reservations.initializeReservations();
+          await reservations.maintainReservations();
+          app.set("reservationsReady", true);
+        } catch {
+          console.warn("Reservations unavailable. Check the contact key, MongoDB transactions and indexes.");
+        }
+      }
 
       server.listen(PORT, config.host, () => {
         console.log(`Server running on port ${PORT}`);

@@ -20,12 +20,19 @@ const writeOne = async () => { writes++; return order; };
 class Product {
   constructor(body) { Object.assign(this, body); }
   async save() { return writeOne(); }
-  static find = list;
+  static find(filter) {
+    if (!filter?._id?.$in) return list();
+    reads++;
+    return { lean: async () => filter._id.$in.includes(id)
+      ? [{ _id: id, name: "Mock", price: 11, discountPrice: 10, options: [] }]
+      : [] };
+  }
   static findById = readOne;
   static findByIdAndUpdate = writeOne;
   static findByIdAndDelete = writeOne;
 }
-const Order = { find: list, findById: readOne, create: writeOne, findByIdAndUpdate: writeOne,
+const Order = { find: list, findById: readOne,
+  create: async data => { writes++; return { ...order, ...data }; }, findByIdAndUpdate: writeOne,
   findOneAndUpdate: async (filter) => { cancelFilter = filter; return writeOne(); } };
 const WaiterCall = { find: list, create: writeOne, findByIdAndUpdate: writeOne };
 for (const [name, stub] of Object.entries({ Product, Order, WaiterCall })) {
@@ -112,8 +119,18 @@ test("missing JWT secret or credentials fails closed", async () => {
 test("public menu, QR order creation and waiter call require no admin token", async () => {
   assert.equal((await request("GET", "/products")).status, 200);
   assert.equal((await request("GET", "/products/" + id)).status, 200);
-  const created = await request("POST", "/orders", undefined, { tableNumber: 1, items: [{ name: "Mock", qty: 1, price: 10 }] });
+  const created = await request("POST", "/orders", undefined, { tableNumber: 1, totalAmount: 1, items: [{ productId: id, name: "Forged", qty: 2, price: 1 }] });
   assert.equal(created.status, 201);
+  assert.equal(created.body.order.totalAmount, 20);
+  assert.equal(created.body.order.items[0].price, 10);
+  assert.equal(created.body.order.items[0].name, "Mock");
+  const before = writes;
+  for (const invalid of [
+    { productId: otherId, qty: 1 },
+    { productId: id, qty: 0 },
+    { productId: id, qty: 1, selectedOptions: { invented: "value" } },
+  ]) assert.equal((await request("POST", "/orders", undefined, { items: [invalid] })).status, 400);
+  assert.equal(writes, before);
   const claims = auth.verifyToken(created.body.orderToken);
   assert.equal(claims.role, "customer"); assert.equal(claims.sub, id);
   assert.equal((await request("GET", "/orders/" + id, created.body.orderToken)).status, 200);

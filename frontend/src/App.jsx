@@ -15,6 +15,9 @@ import AdminProducts from "./pages/AdminProducts";
 import AdminKitchen from "./pages/AdminKitchen";
 import AdminWaiter from "./pages/AdminWaiter";
 import AdminTables from "./pages/AdminTables";
+import { reservationsEnabled } from "./config/reservations";
+import ReservationPage from "./pages/ReservationPage";
+import AdminReservations from "./pages/AdminReservations";
 
 function RequireAdmin({ children }) {
   const token = localStorage.getItem("admin_token");
@@ -27,6 +30,8 @@ export default function App() {
     <><NotificationCenter /><Routes>
       <Route path="/" element={<Navigate to="/table/1" replace />} />
       <Route path="/table/:tableId" element={<MenuPage />} />
+      {reservationsEnabled && <Route path="/reservation" element={<ReservationPage />} />}
+      {reservationsEnabled && <Route path="/admin/reservations" element={<RequireAdmin><AdminReservations /></RequireAdmin>} />}
       <Route path="/success" element={<SuccessPage />} />
       <Route path="/payment-success" element={<PaymentSuccessPage />} />
       <Route path="/my-order/:orderId" element={<MyOrderPage />} />
