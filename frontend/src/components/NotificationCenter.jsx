@@ -1,5 +1,6 @@
 import React,{useEffect,useRef,useState} from "react";
 import {useLocation} from "react-router-dom";
+import { smartKitchenEnabled } from "../config/kitchen";
 import {io} from "socket.io-client";
 import useCustomerPreferences from "../i18n/useCustomerPreferences";
 import {notificationWords,notificationText,mergeNotifications} from "../notifications/messages";
@@ -36,6 +37,7 @@ export default function NotificationCenter(){
   };
   const sync=async()=>{try{const rows=await notificationRequest(token);if(!alive)return;for(const row of rows)add(row,false);}catch{if(alive)setMessage("error");}};
   connection.on("connect",()=>{setStatus("online");sync();window.dispatchEvent(new Event("cafe:order-refresh"));});connection.on("disconnect",()=>setStatus("offline"));connection.on("connect_error",()=>setStatus("offline"));connection.on("notification",add);
+  if (smartKitchenEnabled) connection.on("order:estimate-updated", () => window.dispatchEvent(new Event("cafe:order-refresh")));
   sync();notificationRequest(token,"/config").then(c=>{if(alive)setConfig(c);}).catch(()=>{});
   const interval=setInterval(sync,30000);const onVisible=()=>{if(document.visibilityState==="visible"){sync();window.dispatchEvent(new Event("cafe:order-refresh"));}};document.addEventListener("visibilitychange",onVisible);
   const localMessage=e=>add(e.detail,true);window.addEventListener("cafe:notification",localMessage);

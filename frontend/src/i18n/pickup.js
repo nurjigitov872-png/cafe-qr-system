@@ -1,6 +1,6 @@
 const labels = {
   title: ["Алдын ала алып кетүү", "Заказ навынос", "Order for pickup", "Gel al siparişi"],
-  lead: ["Азыр заказ берип, тандаган убакта алып кетиңиз.", "Закажите заранее и заберите в выбранное время.", "Order now and collect at your chosen time.", "Şimdi sipariş verin, seçtiğiniz saatte alın."],
+  lead: ["Заказ берип, даяр болгондо алып кетиңиз.", "Закажите и заберите, когда будет готово.", "Order now and collect when it’s ready.", "Sipariş verin, hazır olduğunda alın."],
   day: ["Алып кетүү күнү", "Дата получения", "Pickup date", "Teslim alma tarihi"],
   time: ["Алып кетүү убактысы", "Время получения", "Pickup time", "Teslim alma saati"],
   pay: ["Алып кеткенде төлөө", "Оплата при получении", "Pay at pickup", "Teslim alırken öde"],

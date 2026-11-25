@@ -7,7 +7,9 @@ const parseResponse = async (res) => {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error(data.message || "Server error");
+    const error = new Error(data.message || "Server error");
+    error.code = data.code;
+    throw error;
   }
 
   return data;
@@ -124,6 +126,15 @@ export const fetchOrders = async (params = {}) => {
 
   return parseResponse(res);
 };
+
+export async function updatePreparationTime(id, minutes) {
+  const response = await request(API_URL + "/orders/" + id + "/preparation-time", {
+    method: "PATCH",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ minutes }),
+  });
+  return parseResponse(response);
+}
 
 export const updateOrderStatus = async (id, status) => {
   const res = await request(`${API_URL}/orders/${id}/status`, {

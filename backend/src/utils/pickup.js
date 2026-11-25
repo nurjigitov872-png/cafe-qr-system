@@ -1,7 +1,8 @@
 const crypto = require("node:crypto");
 const Order = require("../models/Order");
-const { BookingError, timeOptions, dayStart } = require("./bookingTime");
+const { BookingError, timeOptions } = require("./bookingTime");
 const { priceOrder } = require("./orderPricing");
+const { requireOpenRestaurant } = require("./orderTiming");
 
 const schedule = { opensAt: "09:00", closesAt: "23:00", advanceDays: 14, slotMinutes: 15, durationMinutes: 15, bufferMinutes: 0 };
 const leadTime = 15 * 60_000;
@@ -40,52 +41,52 @@ function checkoutInput(body, requestKey) {
   if (!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(requestKey || "")) {
     throw new BookingError(400, "invalid");
   }
-  const { day, time, items, name, phone, comment } = body || {};
+  const { items, name, phone, comment } = body || {};
   const cleanName = typeof name === "string" ? name.trim() : "";
   const cleanPhone = typeof phone === "string" && /^\+?[\d ()-]{7,24}$/.test(phone.trim()) ? phone.replace(/[^+\d]/g, "") : "";
   if (!cleanName || cleanName.length > 80 || /[\u0000-\u001f]/.test(cleanName) ||
       !/^\+?\d{7,15}$/.test(cleanPhone) || !Array.isArray(items) || items.length < 1 || items.length > 100 ||
       (comment !== undefined && (typeof comment !== "string" || comment.length > 600))) throw new BookingError(400, "invalid");
-  dayStart(day);
-  if (typeof time !== "string" || !/^\d{2}:\d{2}$/.test(time)) throw new BookingError(400, "invalid");
   const selectedItems = items.map(item => ({
     productId: item?.productId, qty: item?.qty,
     selectedOptions: item?.selectedOptions ?? {},
   }));
-  return { day, time, items: selectedItems, contact: { name: cleanName, phone: cleanPhone }, comment: comment || "" };
+  return { items: selectedItems, contact: { name: cleanName, phone: cleanPhone }, comment: comment || "" };
 }
 
 function pickupOrderView(order, includeReadyCode = false) {
-  const { _id, items, comment, orderType, channel, scheduledFor, paymentMethod, paymentStatus, status, totalAmount, createdAt, updatedAt } = order;
-  const view = { _id, items, comment, orderType, channel, scheduledFor, paymentMethod, paymentStatus, status, totalAmount, createdAt, updatedAt };
+  const { _id, items, comment, orderType, channel, scheduledFor, estimatedPrepMinutes, estimatedReadyAt, paymentMethod, paymentStatus, status, totalAmount, createdAt, updatedAt } = order;
+  const view = { _id, items, comment, orderType, channel, scheduledFor, estimatedPrepMinutes, estimatedReadyAt, paymentMethod, paymentStatus, status, totalAmount, createdAt, updatedAt };
   if (includeReadyCode && status === "ready") view.pickupCode = order.pickupCode;
   return view;
 }
 
-async function createPickup(body, requestKey) {
+async function createPickup(body, requestKey, now = Date.now(), orderHours) {
   const input = checkoutInput(body, requestKey);
   const pickupRequestKey = digest("pickup-request", requestKey.toLowerCase());
-  const fingerprint = digest("pickup-payload", JSON.stringify(input, (_, value) =>
+  const fingerprintFor = value => digest("pickup-payload", JSON.stringify(value, (_, value) =>
     value && typeof value === "object" && !Array.isArray(value)
       ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0))
       : value));
+  const fingerprint = fingerprintFor(input);
+  const legacyFingerprint = typeof body?.day === "string" && typeof body?.time === "string"
+    ? fingerprintFor({ ...input, day: body.day, time: body.time }) : null;
   async function replay() {
     const existing = await Order.findOne({ pickupRequestKey }).select("+pickupFingerprint");
     if (!existing) return null;
-    if (existing.pickupFingerprint !== fingerprint) throw new BookingError(409, "idempotency_conflict");
+    if (![fingerprint, legacyFingerprint].includes(existing.pickupFingerprint)) throw new BookingError(409, "idempotency_conflict");
     return { order: existing, created: false };
   }
   const existing = await replay();
   if (existing) return existing;
-  if (!pickupTimes(input.day).includes(input.time)) throw new BookingError(400, "invalid");
+  requireOpenRestaurant(now, orderHours);
   const priced = await priceOrder(input.items);
   const pickupContact = encryptContact(input.contact);
-  const scheduledFor = new Date(input.day + "T" + input.time + ":00+06:00");
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const pickupCode = crypto.randomBytes(5).toString("hex").toUpperCase();
       const order = await Order.create({
-        ...priced, orderType: "takeaway", channel: "pickup", scheduledFor, comment: input.comment,
+        ...priced, orderType: "takeaway", channel: "pickup", comment: input.comment,
         paymentMethod: "cash", paymentStatus: "pending", status: "pending",
         pickupContact, pickupRequestKey, pickupFingerprint: fingerprint, pickupCode,
       });

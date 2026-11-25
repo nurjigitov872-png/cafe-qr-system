@@ -62,7 +62,7 @@
 .cafe-product-body h3 { font:400 23px/1.25 Georgia,serif; letter-spacing:-.3px; overflow-wrap:anywhere; }
 .cafe-product-description { color:var(--cafe-muted); font-size:12px; line-height:1.8; margin-top:10px; overflow-wrap:anywhere; }
 .cafe-option { display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--cafe-muted); margin-top:15px; }
-.cafe-option select,.cafe-option textarea { background:var(--cafe-surface); border:1px solid var(--cafe-border); border-radius:9px; padding:10px 12px; width:100%; min-width:0; color:var(--cafe-text); font:inherit; min-height:44px; }
+.cafe-option select,.cafe-option textarea,.cafe-option.pickup-contact-field input { background:var(--cafe-surface); border:1px solid var(--cafe-border); border-radius:9px; padding:10px 12px; width:100%; min-width:0; color:var(--cafe-text); font:inherit; min-height:44px; }
 .cafe-option textarea { resize:vertical; min-height:85px; }
 .cafe-product-bottom { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:auto; padding-top:20px; }
 .cafe-product-bottom strong { font-size:17px; font-weight:650; white-space:nowrap; }

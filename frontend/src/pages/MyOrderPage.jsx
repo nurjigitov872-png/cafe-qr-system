@@ -1,3 +1,5 @@
+import { smartKitchenEnabled } from "../config/kitchen";
+import { kitchenLabel } from "../i18n/kitchen";
 import { bookingTime } from "../services/reservations";
 import { pickupLabel } from "../i18n/pickup";
 import { pickupEnabled } from "../config/pickup";
@@ -71,7 +73,13 @@ export default function MyOrderPage({
   const table = order?.tableNumber || localStorage.getItem("lastOrderTable") || 1;
   const pickup = pickupEnabled && order?.channel === "pickup";
   const pickupPath = pickup ? "/pickup" : undefined;
-  return <CafeFrame table={table} menuPath={pickupPath}><section className="cafe-result-card cafe-tracking"><span className="cafe-eyebrow">{t("СИЗДИН ЗАКАЗ")}</span><h1>{paymentReturn ? t("Заказ жана төлөм") : t("Менин заказым")}</h1>{loading && <p className="cafe-menu-loading" role="status"><span className="cafe-spinner" />{t("Маалымат жүктөлүүдө…")}</p>}{error && <div className="cafe-alert" role="alert">{t(error)}</div>}{!orderId && <CafeEmpty title={t("Заказ табылган жок")} detail={t("Менюдан товар тандап, заказ берсеңиз болот.")} />}{order && <><div className="cafe-tracking-header"><span>№{String(order._id).slice(-6).toUpperCase()} · {pickup ? pickupLabel(language, "title") : t("Стол") + " №" + order.tableNumber}</span><span className={"cafe-status cafe-status-" + order.status}>{t(CUSTOMER_STATUSES[order.status] || t("Статус белгисиз"))}</span></div>{pickup && <p>{pickupLabel(language, "time")} · {new Intl.DateTimeFormat(language, { timeZone: "Asia/Bishkek", dateStyle: "medium" }).format(new Date(order.scheduledFor))} · {bookingTime(order.scheduledFor, language)} (UTC+6)</p>}
+  return <CafeFrame table={table} menuPath={pickupPath}><section className="cafe-result-card cafe-tracking"><span className="cafe-eyebrow">{t("СИЗДИН ЗАКАЗ")}</span><h1>{paymentReturn ? t("Заказ жана төлөм") : t("Менин заказым")}</h1>{loading && <p className="cafe-menu-loading" role="status"><span className="cafe-spinner" />{t("Маалымат жүктөлүүдө…")}</p>}{error && <div className="cafe-alert" role="alert">{t(error)}</div>}{!orderId && <CafeEmpty title={t("Заказ табылган жок")} detail={t("Менюдан товар тандап, заказ берсеңиз болот.")} />}{order && <><div className="cafe-tracking-header"><span>№{String(order._id).slice(-6).toUpperCase()} · {pickup ? pickupLabel(language, "title") : t("Стол") + " №" + order.tableNumber}</span><span className={"cafe-status cafe-status-" + order.status}>{t(CUSTOMER_STATUSES[order.status] || t("Статус белгисиз"))}</span></div>{pickup && <p>{order.scheduledFor
+            ? <>{pickupLabel(language, "time")} · {new Intl.DateTimeFormat(language, { timeZone: "Asia/Bishkek", dateStyle: "medium" }).format(new Date(order.scheduledFor))} · {bookingTime(order.scheduledFor, language)} (UTC+6)</>
+            : kitchenLabel(language, "asap")}</p>}
+          {smartKitchenEnabled && order.estimatedReadyAt && ["pending", "preparing"].includes(order.status) && <div>
+            <p><strong>{kitchenLabel(language, "estimate")} · {bookingTime(order.estimatedReadyAt, language)} (UTC+6)</strong></p>
+            <p>{kitchenLabel(language, +new Date(order.estimatedReadyAt) <= Date.now() ? "delayed" : "note")}</p>
+          </div>}
           {pickup && order.status === "ready" && order.pickupCode && <p><strong>{pickupLabel(language, "code")} · {order.pickupCode}</strong></p>}<p className="cafe-tracking-type">{{
             dinein: t("Залда"),
             takeaway: t("Алып кетүү"),

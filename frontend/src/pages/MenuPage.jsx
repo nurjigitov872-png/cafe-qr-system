@@ -2,7 +2,7 @@ import { customerMenuConfig, selectCustomerMenu } from "../utils/customerMenu";
 import { pickupEnabled } from "../config/pickup";
 import { pickupLabel } from "../i18n/pickup";
 import { createPickupOrder } from "../services/pickup";
-import { bookingDay } from "../services/reservations";
+import { kitchenLabel } from "../i18n/kitchen";
 import { reservationsEnabled } from "../config/reservations";
 import { reservationLabel } from "../i18n/reservations";
 import { connections } from "../config/connections.js";
@@ -45,7 +45,7 @@ export default function MenuPage({ pickup = false }) {
     [orderError, setOrderError] = useState(""),
     [notice, setNotice] = useState(""),
     [calling, setCalling] = useState(false);
-  const [pickupDetails, setPickupDetails] = useState(() => pickup ? { name: "", phone: "", day: bookingDay(), time: "" } : null);
+  const [pickupDetails, setPickupDetails] = useState(() => pickup ? { name: "", phone: "" } : null);
   const pickupKey = useRef(null);
   const location = useLocation();
   const preview = !pickup && isMenu15Preview(location.search, import.meta.env.DEV, window.location.hostname);
@@ -130,7 +130,7 @@ export default function MenuPage({ pickup = false }) {
     setOrderError("");
     try {
       if (pickup) {
-        if (!pickupDetails.name.trim() || !pickupDetails.phone.trim() || !pickupDetails.day || !pickupDetails.time) {
+        if (!pickupDetails.name.trim() || !pickupDetails.phone.trim()) {
           setOrderError(reservationLabel(language, "invalid"));
           return;
         }
@@ -172,7 +172,8 @@ export default function MenuPage({ pickup = false }) {
         }
       });
     } catch (error) {
-      if (pickup) {
+      if (error.code === "restaurant_closed") setOrderError(kitchenLabel(language, "closed"));
+      else if (pickup) {
         const message = error.status === 409 ? pickupLabel(language, "conflict") : error.status === 400
           ? reservationLabel(language, "invalid") : pickupLabel(language, "checkoutError");
         setOrderError(message);
@@ -186,7 +187,7 @@ export default function MenuPage({ pickup = false }) {
   if (preview && mockCheckout) return <PreviewCheckoutResult checkout={mockCheckout} onBack={() => { setMockCheckout(null); setCartOpen(true); }} />;
   return <div className="cafe-customer" lang={language} data-theme={theme}><header className="cafe-header"><Link to={pickup ? "/pickup" : "/table/" + tableId} aria-label={t("Кафенин менюсу")}><CafeBrand /></Link><CafePreferences /><div className="cafe-header-actions">{reservationsEnabled && !preview && <Link className="cafe-button cafe-button-quiet" to="/reservation">{reservationLabel(language, "title")}</Link>}{pickupEnabled && !pickup && !preview && <Link className="cafe-button cafe-button-quiet" to="/pickup">{pickupLabel(language, "title")}</Link>}{!pickup && <><span className="cafe-table-badge">{t("Стол №{number}", {
             number: Number(tableId) || 1
-          })}</span><button className="cafe-button cafe-button-quiet" aria-label={t("Официант чакыруу")} onClick={callWaiter} disabled={calling || preview}><CafeIcon name="bell" /><span>{calling ? t("Чакырылууда…") : t("Официант")}</span></button></>}{lastOrder && !preview && <Link className="cafe-icon-button" aria-label={t("Менин заказым")} title={t("Менин заказым")} to={"/my-order/" + lastOrder}><CafeIcon name="bag" /></Link>}</div></header>{preview && <section className="cafe-preview-notice" role="status"><strong>{t("15 товар · Алдын ала көрүнүш")}</strong><p>{t("Котормолор сунуш катары көрсөтүлөт. Бул режимде заказ жөнөтүү жана официант чакыруу жабык. Калган товарлар өчүрүлгөн жок.")}</p></section>}<main className="cafe-menu-layout"><section className="cafe-menu-main"><div className="cafe-welcome"><span className="cafe-eyebrow">{t("КОШ КЕЛИҢИЗ · МЕНЮ")}</span><h1>{t("Жакшы даам.")}<br /><em>{t("Жылуу маанай.")}</em></h1><p>{t("Сүйүктүү даамыңызды тандаңыз.")}<br />{t("Заказды түз эле столуңуздан бериңиз.")}</p><span className="cafe-welcome-line" /></div><div className="cafe-menu-controls"><label className="cafe-search"><CafeIcon name="search" /><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder={t("Бүгүн эмнеден даам татасыз?")} aria-label={t("Менюдан издөө")} /></label><CategoryTabs categories={categories} activeCategory={activeCategory} onSelect={setActiveCategory} labelFor={category => localizedField(products.find(product => product.category === category), "category", language) || category} /></div>{notice && <div className="cafe-notice" role="status"><span>{t(notice)}</span><button aria-label={t("Билдирүүнү жабуу")} onClick={() => setNotice("")}><CafeIcon name="close" size={16} /></button></div>}<div className="cafe-section-title"><h2>{activeCategory ? localizedField(products.find(product => product.category === activeCategory), "category", language) || activeCategory : t("Биздин меню")}</h2>{!menuLoading && !menuError && <span>{t("{count} сунуш", {
+          })}</span><button className="cafe-button cafe-button-quiet" aria-label={t("Официант чакыруу")} onClick={callWaiter} disabled={calling || preview}><CafeIcon name="bell" /><span>{calling ? t("Чакырылууда…") : t("Официант")}</span></button></>}{lastOrder && !preview && <Link className="cafe-icon-button" aria-label={t("Менин заказым")} title={t("Менин заказым")} to={"/my-order/" + lastOrder}><CafeIcon name="bag" /></Link>}</div></header>{preview && <section className="cafe-preview-notice" role="status"><strong>{t("15 товар · Алдын ала көрүнүш")}</strong><p>{t("Котормолор сунуш катары көрсөтүлөт. Бул режимде заказ жөнөтүү жана официант чакыруу жабык. Калган товарлар өчүрүлгөн жок.")}</p></section>}<main className="cafe-menu-layout"><section className="cafe-menu-main"><div className="cafe-welcome"><span className="cafe-eyebrow">{t("КОШ КЕЛИҢИЗ · МЕНЮ")}</span><h1>{t("Жакшы даам.")}<br /><em>{t("Жылуу маанай.")}</em></h1><p>{t("Сүйүктүү даамыңызды тандаңыз.")}<br />{pickup ? pickupLabel(language, "lead") : t("Заказды түз эле столуңуздан бериңиз.")}</p><span className="cafe-welcome-line" /></div><div className="cafe-menu-controls"><label className="cafe-search"><CafeIcon name="search" /><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder={t("Бүгүн эмнеден даам татасыз?")} aria-label={t("Менюдан издөө")} /></label><CategoryTabs categories={categories} activeCategory={activeCategory} onSelect={setActiveCategory} labelFor={category => localizedField(products.find(product => product.category === category), "category", language) || category} /></div>{notice && <div className="cafe-notice" role="status"><span>{t(notice)}</span><button aria-label={t("Билдирүүнү жабуу")} onClick={() => setNotice("")}><CafeIcon name="close" size={16} /></button></div>}<div className="cafe-section-title"><h2>{activeCategory ? localizedField(products.find(product => product.category === activeCategory), "category", language) || activeCategory : t("Биздин меню")}</h2>{!menuLoading && !menuError && <span>{t("{count} сунуш", {
               count: filteredProducts.length
             })}</span>}</div>{menuLoading ? <div className="cafe-menu-loading" role="status"><span className="cafe-spinner" />{t("Меню даярдалууда…")}</div> : menuError ? <div className="cafe-error-panel" role="alert"><CafeEmpty title={t("Меню ачылган жок")} detail={t(menuError)} icon="cup" /><button className="cafe-button cafe-button-primary" onClick={loadProducts}>{t("Кайра аракет кылуу")}</button></div> : filteredProducts.length ? <div className="cafe-products">{filteredProducts.map(product => <ProductCard key={(preview ? "preview-" : "menu-") + product._id} preview={preview} defaultOptions={product.previewOptions || product.menuOptions} product={product} onAdd={add} isFavorite={favorites.includes(product._id)} onToggleFavorite={toggleFavorite} />)}</div> : <CafeEmpty title={search || activeCategory ? t("Даам табылган жок") : t("Меню азырынча бош")} detail={search || activeCategory ? t("Башка сөз менен издеп же категорияны алмаштырып көрүңүз.") : t("Сураныч, официанттан меню тууралуу тактап алыңыз.")} icon="plate" />}</section><CartDrawer pickup={pickupDetails} onPickupChange={setPickupDetails} cartItems={cartItems} note={note} setNote={setNote} onIncrease={id => setCartItems(items => items.map(item => item._id === id ? {
         ...item,

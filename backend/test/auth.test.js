@@ -44,6 +44,7 @@ require.cache[telegramFile] = { id: telegramFile, filename: telegramFile, loaded
   exports: { sendOrderNotification: async () => { notifications++; return true; } } };
 const app = express();
 app.use(express.json());
+app.set("orderClock", () => Date.parse("2026-11-25T12:00:00+06:00"));
 for (const [prefix, file] of [["auth", "authRoutes"], ["products", "productRoutes"], ["orders", "orderRoutes"], ["waiter-calls", "waiterCallRoutes"]]) {
   app.use("/api/" + prefix, require("../src/routes/" + file));
 }

@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
 const { pickupEnabled, pickupOrderView } = require("../utils/pickup");
+const { BookingError } = require("../utils/bookingTime");
+const { smartKitchenEnabled, activePreparationStatuses, orderNow, requireOpenRestaurant, preparationEstimate } = require("../utils/orderTiming");
 const { InvalidOrder, priceOrder } = require("../utils/orderPricing");
 const { requireAdmin, requireOrderAccess, signToken, getSecret } = require("../middleware/auth");
 const { sendOrderNotification } = require("../utils/telegram");
@@ -103,6 +105,7 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "Корзина бош" });
     }
 
+    if (smartKitchenEnabled()) requireOpenRestaurant(orderNow(req), req.app.get("restaurantOrderHours"));
     const { items: cleanItems, totalAmount } = await priceOrder(items);
 
     const order = await Order.create({
@@ -133,9 +136,37 @@ router.post("/", async (req, res) => {
     const orderToken = signToken({ role: "customer" }, order._id);
     res.status(201).json({ success: true, order, orderToken });
   } catch (error) {
+    if (error instanceof BookingError) return res.status(error.status).json({ code: error.code });
     if (error instanceof InvalidOrder) return res.status(400).json({ message: "Товар, саны же параметрлери жараксыз" });
     console.error("ORDER CREATE ERROR:");
     res.status(500).json({ message: "Заказ түзүү катасы" });
+  }
+});
+
+router.patch("/:id/preparation-time", (req, res, next) => {
+  if (!smartKitchenEnabled()) return res.sendStatus(404);
+  next();
+}, requireAdmin, async (req, res) => {
+  try {
+    if (!/^[a-f0-9]{24}$/i.test(req.params.id)) return res.status(400).json({ code: "invalid_order" });
+    const estimate = preparationEstimate(req.body?.minutes, orderNow(req));
+    const allowPickup = pickupEnabled() && req.app.get("pickupReady");
+    const order = await Order.findOneAndUpdate({
+      _id: req.params.id,
+      status: { $in: activePreparationStatuses },
+      ...(!allowPickup && { channel: { $ne: "pickup" } }),
+    }, { $set: estimate }, { new: true });
+    if (!order) return res.status(409).json({ code: "order_not_in_preparation" });
+    const pickup = order.channel === "pickup";
+    const view = pickup ? pickupOrderView(order) : order;
+    const io = req.app.get("io");
+    io?.to(pickup ? ["admin", "kitchen"] : ["admin", "kitchen", "waiter"]).emit("order:updated", view);
+    io?.to("order:" + order._id).emit("order:estimate-updated", { orderId: String(order._id) });
+    res.json(view);
+  } catch (error) {
+    if (error instanceof BookingError) return res.status(error.status).json({ code: error.code });
+    console.error("Order preparation estimate update failed.");
+    res.status(500).json({ code: "unavailable" });
   }
 });
 

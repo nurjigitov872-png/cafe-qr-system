@@ -9,12 +9,12 @@ async function pickupRequest(path, { method = "GET", body, headers = {}, signal 
   if (!response.ok) {
     const error = new Error("Pickup request failed");
     error.status = response.status;
+    error.code = (await response.json().catch(() => ({}))).code;
     throw error;
   }
   return response.json();
 }
 
-export const fetchPickupTimes = (day, signal) => pickupRequest("/times?" + new URLSearchParams({ day }), { signal });
 export const createPickupOrder = (body, key) => pickupRequest("", { method: "POST", body, headers: { "Idempotency-Key": key } });
 export const collectPickupOrder = (id, code) => pickupRequest("/" + id + "/collect", { method: "PATCH", body: { code }, headers: authHeaders() });
 export const fetchPickupContact = id => pickupRequest("/" + id + "/contact", { headers: authHeaders() });

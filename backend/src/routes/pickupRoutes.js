@@ -2,6 +2,7 @@ const express = require("express");
 const Order = require("../models/Order");
 const { requireAdmin, signToken } = require("../middleware/auth");
 const { BookingError } = require("../utils/bookingTime");
+const { orderNow } = require("../utils/orderTiming");
 const { InvalidOrder } = require("../utils/orderPricing");
 const { pickupEnabled, pickupTimes, createPickup, collectPickup, pickupOrderView, revealPickupContact } = require("../utils/pickup");
 
@@ -37,7 +38,9 @@ async function publish(req, kind, order) {
 router.get("/times", handle(async (req, res) => res.json({ times: pickupTimes(req.query.day) })));
 
 router.post("/", handle(async (req, res) => {
-  const { order, created } = await createPickup(req.body, req.get("Idempotency-Key"));
+  const { order, created } = await createPickup(
+    req.body, req.get("Idempotency-Key"), orderNow(req), req.app.get("restaurantOrderHours"),
+  );
   const view = pickupOrderView(order);
   if (created) await publish(req, "order.new", view);
   res.status(created ? 201 : 200).json({ order: view, orderToken: signToken({ role: "customer" }, order._id) });

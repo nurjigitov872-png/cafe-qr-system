@@ -16,6 +16,8 @@ const orderSchema = new mongoose.Schema(
     tableNumber: { type: Number, required() { return this.channel !== "pickup"; }, default() { return this.channel === "pickup" ? undefined : 1; } },
     channel: { type: String, enum: ["pickup"] },
     scheduledFor: Date,
+    estimatedPrepMinutes: Number,
+    estimatedReadyAt: Date,
     pickupContact: { type: String, select: false },
     pickupRequestKey: { type: String, select: false },
     pickupFingerprint: { type: String, select: false },

@@ -101,6 +101,7 @@ test("isolated MongoDB enforces reservation and pickup concurrency, access and o
     const Order = require("../src/models/Order");
     const Product = require("../src/models/Product");
     process.env.APP_ENV = "staging";
+    process.env.TELEGRAM_ENABLED = "false";
     process.env.PICKUP_ENABLED = "true";
     process.env.PICKUP_CONTACT_KEY = crypto.randomBytes(32).toString("hex");
     await require("../src/utils/pickup").initializePickup();
@@ -109,6 +110,8 @@ test("isolated MongoDB enforces reservation and pickup concurrency, access and o
     const pickupApp = express();
     pickupApp.use(express.json());
     pickupApp.set("pickupReady", true);
+    let orderClock = Date.parse(day + "T12:00:00+06:00");
+    pickupApp.set("orderClock", () => orderClock);
     pickupApp.set("io", { to: rooms => ({ emit: (event, payload) => socketEvents.push({ rooms, event, payload }) }) });
     pickupApp.set("notifications", { publish: (kind, order) => events.push({ kind, order }) });
     pickupApp.use("/pickup", require("../src/routes/pickupRoutes"));
@@ -120,7 +123,7 @@ test("isolated MongoDB enforces reservation and pickup concurrency, access and o
     const pickupBase = "http://127.0.0.1:" + server.address().port;
     const stagingAdmin = signToken({ role: "admin" }, process.env.ADMIN_USERNAME);
     const product = await Product.create({ name: "Synthetic meal", price: 55, discountPrice: 45, category: "Tests" });
-    const checkout = { ...body, time: "10:00", paymentStatus: "paid", totalAmount: 1, items: [{ productId: String(product._id), qty: 2, price: 1 }] };
+    const checkout = { name: body.name, phone: body.phone, paymentStatus: "paid", totalAmount: 1, items: [{ productId: String(product._id), qty: 2, price: 1 }] };
     const key = crypto.randomUUID();
     const call = (path, method = "GET", payload, token, requestKey) => fetch(pickupBase + path, {
       method, headers: {
@@ -138,6 +141,7 @@ test("isolated MongoDB enforces reservation and pickup concurrency, access and o
     assert.equal((await retry.json()).order._id, orderId);
     assert.equal(await Order.countDocuments(), 1);
     assert.equal(accepted.order.tableNumber, undefined);
+    assert.equal(accepted.order.scheduledFor, undefined);
     assert.equal(accepted.order.totalAmount, 90);
     assert.equal(accepted.order.paymentStatus, "pending");
     assert.equal(accepted.order.pickupCode, undefined);
@@ -150,11 +154,37 @@ test("isolated MongoDB enforces reservation and pickup concurrency, access and o
     assert.equal((await call("/pickup", "POST", { ...checkout, name: "Different" }, null, key)).status, 409);
     assert.equal((await call("/pickup/" + orderId + "/contact", "GET", null, accepted.orderToken)).status, 403);
     assert.equal((await (await call("/pickup/" + orderId + "/contact", "GET", null, stagingAdmin)).json()).phone, body.phone);
+    const ordersBeforeClosed = await Order.countDocuments();
+    orderClock = Date.parse(day + "T23:00:00+06:00");
+    const closedPickup = await call("/pickup", "POST", checkout, null, crypto.randomUUID());
+    assert.equal(closedPickup.status, 503);
+    assert.equal((await closedPickup.json()).code, "restaurant_closed");
+    assert.equal((await call("/pickup", "POST", checkout, null, key)).status, 200);
+    const closedQr = await call("/orders", "POST", { items: checkout.items, tableNumber: 1 });
+    assert.equal(closedQr.status, 503);
+    assert.equal((await closedQr.json()).code, "restaurant_closed");
+    assert.equal(await Order.countDocuments(), ordersBeforeClosed);
+
+    orderClock = Date.parse(day + "T12:00:00+06:00");
     const updatePath = "/orders/" + orderId + "/status";
+    const prepPath = "/orders/" + orderId + "/preparation-time";
+    assert.equal((await call(prepPath, "PATCH", { minutes: 20 }, accepted.orderToken)).status, 403);
+    assert.equal((await call(prepPath, "PATCH", { minutes: 241 }, stagingAdmin)).status, 400);
+    assert.equal((await call(prepPath, "PATCH", { minutes: 20 }, stagingAdmin)).status, 200);
+    const estimate = await (await call("/orders/" + orderId, "GET", null, accepted.orderToken)).json();
+    assert.equal(estimate.estimatedReadyAt, new Date(orderClock + 20 * 60_000).toISOString());
+    orderClock += 5 * 60_000;
+    orderClock = Date.parse(day + "T23:05:00+06:00");
+    const delay = await (await call(prepPath, "PATCH", { minutes: 32 }, stagingAdmin)).json();
+    assert.equal(delay.estimatedPrepMinutes, 32);
+    assert.equal(delay.estimatedReadyAt, new Date(orderClock + 32 * 60_000).toISOString());
+    const refreshed = await (await call("/orders/" + orderId, "GET", null, accepted.orderToken)).json();
+    assert.equal(refreshed.estimatedReadyAt, delay.estimatedReadyAt);
     assert.equal((await call(updatePath, "PATCH", { status: "served" }, stagingAdmin)).status, 409);
     const collect = "/pickup/" + orderId + "/collect";
     assert.equal((await call(collect, "PATCH", { code: persisted.pickupCode }, stagingAdmin)).status, 409);
     for (const status of ["preparing", "ready"]) assert.equal((await call(updatePath, "PATCH", { status }, stagingAdmin)).status, 200);
+    assert.equal((await call(prepPath, "PATCH", { minutes: 15 }, stagingAdmin)).status, 409);
     const tracking = await call("/orders/" + orderId, "GET", null, accepted.orderToken);
     assert.equal(tracking.headers.get("Cache-Control"), "no-store");
     const ready = await tracking.json();
@@ -179,6 +209,11 @@ test("isolated MongoDB enforces reservation and pickup concurrency, access and o
     assert.ok(socketEvents.some(event => event.payload.status === "ready"));
     assert.ok(socketEvents.some(event => event.payload.status === "served"));
     for (const event of socketEvents) {
+      if (event.event === "order:estimate-updated") {
+        assert.equal(event.rooms, "order:" + orderId);
+        assert.deepEqual(event.payload, { orderId });
+        continue;
+      }
       assert.deepEqual(event.rooms, ["admin", "kitchen"]);
       const serialized = JSON.stringify(event.payload);
       for (const value of ["pickupContact", "pickupCode", "pickupRequestKey", "pickupFingerprint", "pickupAttempts", body.phone, body.name, ready.pickupCode]) {
@@ -187,11 +222,25 @@ test("isolated MongoDB enforces reservation and pickup concurrency, access and o
     }
     assert.equal((await (await call("/orders/" + orderId, "GET", null, accepted.orderToken)).json()).pickupCode, undefined);
     assert.equal((await call("/pickup/" + orderId + "/contact", "GET", null, stagingAdmin)).status, 404);
+    orderClock = Date.parse(day + "T12:00:00+06:00");
     const second = await (await call("/pickup", "POST", checkout, null, crypto.randomUUID())).json();
     const secondStored = await Order.findById(second.order._id).select("+pickupCode");
     assert.notEqual(secondStored.pickupCode, persisted.pickupCode);
+    const legacyScheduledFor = new Date(orderClock + 60 * 60_000);
+    await Order.updateOne({ _id: second.order._id }, { scheduledFor: legacyScheduledFor });
+    const legacy = await (await call("/orders/" + second.order._id, "GET", null, second.orderToken)).json();
+    assert.equal(legacy.scheduledFor, legacyScheduledFor.toISOString());
+    assert.equal(legacy.pickupCode, undefined);
+    const legacyUpdate = "/orders/" + second.order._id + "/status";
+    for (const status of ["preparing", "ready"]) assert.equal((await call(legacyUpdate, "PATCH", { status }, stagingAdmin)).status, 200);
+    assert.equal((await call("/pickup/" + second.order._id + "/collect", "PATCH", { code: secondStored.pickupCode }, stagingAdmin)).status, 200);
     process.env.APP_ENV = "production";
     assert.equal((await call("/pickup/times?day=" + day)).status, 404);
+    orderClock = Date.parse(day + "T23:00:00+06:00");
+    const productionQr = await call("/orders", "POST", { items: checkout.items, tableNumber: 1 });
+    assert.equal(productionQr.status, 201);
+    const productionOrder = (await productionQr.json()).order;
+    assert.equal((await call("/orders/" + productionOrder._id + "/preparation-time", "PATCH", { minutes: 20 })).status, 404);
   } finally {
     if (server) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
     await mongoose.disconnect();

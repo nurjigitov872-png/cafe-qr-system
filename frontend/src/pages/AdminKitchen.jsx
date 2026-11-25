@@ -1,3 +1,6 @@
+import { smartKitchenEnabled } from "../config/kitchen";
+import PreparationEstimate from "../components/PreparationEstimate";
+import { kitchenLabel } from "../i18n/kitchen";
 import { pickupEnabled } from "../config/pickup";
 import { pickupLabel } from "../i18n/pickup";
 import useCustomerPreferences from "../i18n/useCustomerPreferences";
@@ -47,11 +50,13 @@ export default function AdminKitchen() {
           const secondary = Object.keys(KITCHEN_ACTIONS).filter(target => !pickup && target !== status && target !== next);
           return <article className={"pos-panel pos-kitchen-card pos-kitchen-card--" + status} key={order._id}>
             <div className="pos-panel-heading"><div><h3>{pickup ? pickupLabel(language, "title") : "Стол №" + order.tableNumber}</h3><p>№{String(order._id).slice(-6).toUpperCase()}</p></div><Icon name="clock" size={17} /></div>
-            <time className="pos-order-time" dateTime={pickup ? order.scheduledFor : order.createdAt}>{formatDate(pickup ? order.scheduledFor : order.createdAt)}</time>
+            {pickup && !order.scheduledFor && <p>{kitchenLabel(language, "asap")}</p>}
+            <time className="pos-order-time" dateTime={pickup && order.scheduledFor ? order.scheduledFor : order.createdAt}>{formatDate(pickup && order.scheduledFor ? order.scheduledFor : order.createdAt)}</time>
             {wait && <span className={"pos-wait-time pos-wait-time--" + wait.level}><Icon name="clock" size={14} />{wait.minutes} мүнөт күттү{wait.level === "urgent" && " · Көптөн күтүлүүдө"}</span>}
             <ul>{(order.items || []).map((item, index) => <li key={index}><span>{item.name}</span><strong>× {item.qty}</strong></li>)}</ul>
             {order.comment && <p className="pos-order-comment">{order.comment}</p>}
             <p className="pos-order-total">{money(order.totalAmount)}</p>
+            {smartKitchenEnabled && <PreparationEstimate order={order} language={language} onSaved={updateItem} />}
             <div className="pos-kitchen-actions">
               {next && <button className="pos-button pos-button--primary" disabled={!!busy} onClick={() => update(order._id, next)}>{busy === order._id ? "Сакталууда…" : KITCHEN_ACTIONS[next]}</button>}
               {secondary.length > 0 && <details className="pos-secondary-actions"><summary>Кошумча аракеттер</summary><div>{secondary.map(target => <button key={target} className="pos-button pos-button--quiet" disabled={!!busy} onClick={() => update(order._id, target)}>{KITCHEN_ACTIONS[target]}</button>)}</div></details>}

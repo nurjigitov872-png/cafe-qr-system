@@ -16,14 +16,15 @@ test("Pickup retries use the same idempotency header and avoid browser caching",
     return { ok: true, json: async () => ({ order: { _id: "synthetic" } }) };
   };
   try {
-    const body = { day: "2026-11-26", time: "10:00", items: [{ productId: "test-product", qty: 1 }] };
+    const body = { name: "Synthetic", phone: "+996000000000", items: [{ productId: "test-product", qty: 1 }] };
     await assert.rejects(api.createPickupOrder(body, "test-key"));
     await api.createPickupOrder(body, "test-key");
     assert.deepEqual(calls[0], calls[1]);
     assert.equal(calls[1].url, "https://staging.invalid/api/checkout/pickup");
     assert.equal(calls[1].headers["Idempotency-Key"], "test-key");
     assert.equal(calls[1].cache, "no-store");
-    assert.ok(!JSON.parse(calls[1].body).tableNumber);
+    const submitted = JSON.parse(calls[1].body);
+    for (const key of ["tableNumber", "day", "time"]) assert.equal(submitted[key], undefined);
   } finally { globalThis.fetch = oldFetch; }
 });
 
