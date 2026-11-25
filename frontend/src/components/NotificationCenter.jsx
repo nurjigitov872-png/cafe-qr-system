@@ -1,5 +1,6 @@
 import React,{useEffect,useRef,useState} from "react";
 import {useLocation} from "react-router-dom";
+import { deliveryEnabled } from "../config/delivery";
 import { smartKitchenEnabled } from "../config/kitchen";
 import {io} from "socket.io-client";
 import useCustomerPreferences from "../i18n/useCustomerPreferences";
@@ -11,7 +12,8 @@ import "../notifications/notifications.css";
 export default function NotificationCenter(){
  const location=useLocation();
  const admin=location.pathname.startsWith("/admin/")&&location.pathname!=="/admin/login";
- const orderId=/^\/my-order\/([a-f0-9]{24})$/i.exec(location.pathname)?.[1]||(location.pathname==="/payment-success"?new URLSearchParams(location.search).get("orderId"):null);
+ const deliveryOrder = deliveryEnabled && /^\/delivery\/order\/([a-f0-9]{24})$/i.exec(location.pathname)?.[1];
+ const orderId=deliveryOrder || /^\/my-order\/([a-f0-9]{24})$/i.exec(location.pathname)?.[1]||(location.pathname==="/payment-success"?new URLSearchParams(location.search).get("orderId"):null);
  const token=localStorage.getItem(admin?"admin_token":"order_token_"+orderId);
  const {language:customerLanguage,theme}=useCustomerPreferences();
  const language=admin?"ky":customerLanguage,words=notificationWords(language);
@@ -38,12 +40,20 @@ export default function NotificationCenter(){
   const sync=async()=>{try{const rows=await notificationRequest(token);if(!alive)return;for(const row of rows)add(row,false);}catch{if(alive)setMessage("error");}};
   connection.on("connect",()=>{setStatus("online");sync();window.dispatchEvent(new Event("cafe:order-refresh"));});connection.on("disconnect",()=>setStatus("offline"));connection.on("connect_error",()=>setStatus("offline"));connection.on("notification",add);
   if (smartKitchenEnabled) connection.on("order:estimate-updated", () => window.dispatchEvent(new Event("cafe:order-refresh")));
+  if (deliveryEnabled) {
+    const updateDelivery = event => {
+      if (admin || event?.orderId === orderId) window.dispatchEvent(new Event("cafe:delivery-update"));
+    };
+    connection.on("delivery:updated", updateDelivery);
+    connection.on("delivery:gps", updateDelivery);
+    if (deliveryOrder) connection.on("order:estimate-updated", updateDelivery);
+  }
   sync();notificationRequest(token,"/config").then(c=>{if(alive)setConfig(c);}).catch(()=>{});
   const interval=setInterval(sync,30000);const onVisible=()=>{if(document.visibilityState==="visible"){sync();window.dispatchEvent(new Event("cafe:order-refresh"));}};document.addEventListener("visibilitychange",onVisible);
   const localMessage=e=>add(e.detail,true);window.addEventListener("cafe:notification",localMessage);
   const workerMessage=e=>{if(e.data?.type==="notification")sync();};navigator.serviceWorker?.addEventListener("message",workerMessage);
   return()=>{alive=false;window.removeEventListener("cafe:notification",localMessage);connection.disconnect();clearInterval(interval);clearTimeout(toastTimer.current);document.removeEventListener("visibilitychange",onVisible);navigator.serviceWorker?.removeEventListener("message",workerMessage);};
- },[active,token,admin,orderId]);
+ },[active,token,admin,orderId,deliveryOrder]);
  useEffect(()=>()=>{audio.current?.close();},[]);
  // Updating an existing subscription never prompts and keeps push language current.
  useEffect(()=>{if(!active||!supportsPush()||Notification.permission!=="granted")return;let alive=true;navigator.serviceWorker.getRegistration().then(async registration=>{const sub=await registration?.pushManager.getSubscription();if(sub&&alive){await notificationRequest(token,"/subscription",{method:"POST",body:{subscription:sub.toJSON(),language}});if(alive)setPush(true);}}).catch(()=>{});return()=>{alive=false;};},[active,token,language]);

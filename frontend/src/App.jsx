@@ -18,6 +18,10 @@ import AdminTables from "./pages/AdminTables";
 import { reservationsEnabled } from "./config/reservations";
 import ReservationPage from "./pages/ReservationPage";
 import AdminReservations from "./pages/AdminReservations";
+import AdminDelivery from "./pages/AdminDelivery";
+import CourierPage from "./pages/CourierPage";
+import DeliveryOrder from "./pages/DeliveryOrder";
+import { deliveryEnabled } from "./config/delivery";
 import { pickupEnabled } from "./config/pickup";
 
 function RequireAdmin({ children }) {
@@ -31,6 +35,10 @@ export default function App() {
     <><NotificationCenter /><Routes>
       <Route path="/" element={<Navigate to="/table/1" replace />} />
       <Route path="/table/:tableId" element={<MenuPage key="table-menu" />} />
+      {deliveryEnabled && <Route path="/delivery" element={<MenuPage key="delivery-menu" delivery />} />}
+      {deliveryEnabled && <Route path="/delivery/order/:orderId" element={<DeliveryOrder />} />}
+      {deliveryEnabled && <Route path="/courier" element={<CourierPage />} />}
+      {deliveryEnabled && <Route path="/admin/logistics" element={<RequireAdmin><AdminDelivery /></RequireAdmin>} />}
       {pickupEnabled && <Route path="/pickup" element={<MenuPage key="pickup-menu" pickup />} />}
       {reservationsEnabled && <Route path="/reservation" element={<ReservationPage />} />}
       {reservationsEnabled && <Route path="/admin/reservations" element={<RequireAdmin><AdminReservations /></RequireAdmin>} />}

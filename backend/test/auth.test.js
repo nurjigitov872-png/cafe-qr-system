@@ -150,7 +150,7 @@ test("order read/cancel rejects missing/invalid token and other customers", asyn
     assert.equal((await request(method, "/orders/" + id + suffix, customer())).status, 200);
     assert.equal((await request(method, "/orders/" + id + suffix, admin())).status, 200);
   }
-  assert.deepEqual(cancelFilter, { _id: id, status: "pending", channel: { $ne: "pickup" } });
+  assert.deepEqual(cancelFilter, { _id: id, status: "pending", channel: { $nin: ["delivery", "pickup"] } });
 });
 test("socket middleware rejects guests, invalid tokens and customer roles", () => {
   for (const token of [undefined, "invalid", customer(), signCustom({ role: "admin" }, { expiresIn: -1 })]) {

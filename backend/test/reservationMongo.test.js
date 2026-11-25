@@ -9,7 +9,7 @@ const { createServer } = require("node:net");
 const mongoose = require("mongoose");
 
 const executable = process.env.RESERVATION_TEST_MONGOD;
-test("isolated MongoDB enforces reservation and pickup concurrency, access and order rules", { skip: !executable, timeout: 90_000 }, async () => {
+test("isolated MongoDB enforces reservation, pickup and delivery concurrency, access and order rules", { skip: !executable, timeout: 90_000 }, async () => {
   const socket = createServer();
   await new Promise(resolve => socket.listen(0, "127.0.0.1", resolve));
   const { port } = socket.address();
@@ -116,6 +116,8 @@ test("isolated MongoDB enforces reservation and pickup concurrency, access and o
     pickupApp.set("notifications", { publish: (kind, order) => events.push({ kind, order }) });
     pickupApp.use("/pickup", require("../src/routes/pickupRoutes"));
     pickupApp.use("/orders", require("../src/routes/orderRoutes"));
+    pickupApp.use("/delivery", require("../src/routes/deliveryRoutes"));
+    pickupApp.set("deliveryReady", true);
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));
     server = pickupApp.listen(0, "127.0.0.1");
@@ -241,6 +243,135 @@ test("isolated MongoDB enforces reservation and pickup concurrency, access and o
     assert.equal(productionQr.status, 201);
     const productionOrder = (await productionQr.json()).order;
     assert.equal((await call("/orders/" + productionOrder._id + "/preparation-time", "PATCH", { minutes: 20 })).status, 404);
+    process.env.DELIVERY_ENABLED = "true";
+    process.env.DELIVERY_GPS_ENABLED = "true";
+    process.env.DELIVERY_CONTACT_KEY = crypto.randomBytes(32).toString("hex");
+    assert.equal((await call("/delivery/zone")).status, 404);
+    process.env.APP_ENV = "staging";
+    await require("../src/utils/delivery").initializeDelivery();
+    orderClock = Date.parse(day + "T12:00:00+06:00");
+
+    const zone = await (await call("/delivery/zone")).json();
+    assert.equal(zone.demo, true);
+    assert.equal(zone.gpsEnabled, true);
+    const deliveryInput = { ...checkout, address: "Synthetic test street", house: "1", apartment: "42",
+      entrance: "2", comment: "Synthetic courier note", point: zone.center, deliveryFee: 1 };
+    const deliveryKey = crypto.randomUUID();
+    const attemptsForDelivery = await Promise.all(Array.from({ length: 2 }, () =>
+      call("/delivery/orders", "POST", deliveryInput, null, deliveryKey)));
+    assert.deepEqual(attemptsForDelivery.map(response => response.status).sort(), [200, 201]);
+    const delivery = await attemptsForDelivery[0].json();
+    const deliveryId = delivery.order._id;
+    assert.equal((await attemptsForDelivery[1].json()).order._id, deliveryId);
+    assert.equal(delivery.order.totalAmount, 190);
+    assert.equal(delivery.order.deliveryFee, 100);
+    assert.equal(delivery.order.paymentStatus, "pending");
+    assert.equal(delivery.order.tableNumber, undefined);
+    const protectedOrder = await Order.findById(deliveryId).select("+deliveryContact +deliveryCode");
+    assert.equal(protectedOrder.deliveryContact.includes(deliveryInput.address), false);
+    assert.equal((await call("/delivery/orders/" + deliveryId)).status, 401);
+    assert.equal((await call("/delivery/orders/" + deliveryId, "GET", null, otherOrder)).status, 403);
+
+    const password = crypto.randomBytes(18).toString("hex");
+    const couriersPath = "/delivery/admin/couriers";
+    const profiles = await Promise.all(["courier-a", "courier-b"].map(username =>
+      call(couriersPath, "POST", { name: username, username, password }, stagingAdmin).then(response => response.json())));
+    const sessions = await Promise.all(profiles.map(({ username }) =>
+      call("/delivery/courier/login", "POST", { username, password }).then(response => response.json())));
+    assert.ok(sessions.every(session => session.token));
+    const assigned = await Promise.all(profiles.map(profile => call("/delivery/admin/orders/" + deliveryId + "/assign", "PATCH",
+      { courierId: profile._id, revision: 0 }, stagingAdmin)));
+    assert.deepEqual(assigned.map(response => response.status).sort(), [200, 409]);
+    const firstIndex = assigned.findIndex(response => response.ok);
+    const waitingResponse = await call("/delivery/orders", "POST", deliveryInput, null, crypto.randomUUID());
+    assert.equal(waitingResponse.status, 201);
+    const waiting = await waitingResponse.json();
+    assert.notEqual((await Order.findById(waiting.order._id).select("+deliveryCode")).deliveryCode, protectedOrder.deliveryCode);
+    const busy = await call("/delivery/admin/orders/" + waiting.order._id + "/assign", "PATCH",
+      { courierId: profiles[firstIndex]._id, revision: 0 }, stagingAdmin);
+    assert.equal(busy.status, 409);
+    assert.equal((await busy.json()).code, "courier_busy");
+    const winnerIndex = 1 - firstIndex;
+    const reassigned = await call("/delivery/admin/orders/" + deliveryId + "/assign", "PATCH",
+      { courierId: profiles[winnerIndex]._id, revision: 1 }, stagingAdmin);
+    assert.equal(reassigned.status, 200);
+    const assignedCourier = sessions[winnerIndex].token;
+    const otherCourier = sessions[firstIndex].token;
+    const runnerPath = "/delivery/courier/orders";
+    const statusPath = runnerPath + "/" + deliveryId + "/state";
+    const gpsPath = runnerPath + "/" + deliveryId + "/gps";
+    assert.equal((await (await call(runnerPath, "GET", null, assignedCourier)).json()).orders[0].contact.address, deliveryInput.address);
+    assert.equal((await (await call(runnerPath, "GET", null, otherCourier)).json()).orders.length, 0);
+    assert.equal((await call(gpsPath, "PATCH", zone.center, assignedCourier)).status, 409);
+    assert.equal((await call(statusPath, "PATCH", { state: "picked_up" }, assignedCourier)).status, 409);
+    assert.equal((await call(statusPath, "PATCH", { state: "accepted" }, assignedCourier)).status, 200);
+    assert.equal((await call(statusPath, "PATCH", { state: "picked_up" }, assignedCourier)).status, 409);
+    const kitchen = "/orders/" + deliveryId + "/status";
+    for (const status of ["preparing", "ready"]) assert.equal((await call(kitchen, "PATCH", { status }, stagingAdmin)).status, 200);
+    for (const state of ["picked_up", "en_route"]) assert.equal((await call(statusPath, "PATCH", { state }, assignedCourier)).status, 200);
+    assert.equal((await call(gpsPath, "PATCH", zone.center, otherCourier)).status, 409);
+    assert.equal((await call(gpsPath, "PATCH", { lat: 91, lng: 0 }, assignedCourier)).status, 400);
+    assert.equal((await call(gpsPath, "PATCH", { lat: 0, lng: 181 }, assignedCourier)).status, 400);
+    assert.equal((await call(gpsPath, "PATCH", zone.center, delivery.orderToken)).status, 403);
+    const concurrentGps = await Promise.all(Array.from({ length: 2 }, () => call(gpsPath, "PATCH", zone.center, assignedCourier)));
+    assert.deepEqual(concurrentGps.map(response => response.status).sort(), [204, 429]);
+    assert.equal(concurrentGps.find(response => response.status === 429).headers.get("Retry-After"), "4");
+    const { identity } = require("../src/utils/notificationPolicy");
+    assert.throws(() => identity(assignedCourier));
+    assert.deepEqual(identity(otherOrder).audiences, ["order:000000000000000000000002"]);
+    assert.deepEqual(identity(delivery.orderToken).audiences, ["order:" + deliveryId]);
+    const trackingResult = await (await call("/delivery/orders/" + deliveryId, "GET", null, delivery.orderToken)).json();
+    assert.equal(trackingResult.tracking.lat, zone.center.lat);
+    assert.equal(trackingResult.deliveryCode, protectedOrder.deliveryCode);
+    const adminResult = await (await call("/delivery/orders/" + deliveryId, "GET", null, stagingAdmin)).json();
+    assert.equal(adminResult.deliveryCode, undefined);
+    assert.equal(adminResult.deliveryContact, undefined);
+    const gpsEvent = socketEvents.find(event => event.event === "delivery:gps");
+    assert.deepEqual(gpsEvent, { rooms: ["admin", "order:" + deliveryId], event: "delivery:gps", payload: { orderId: deliveryId } });
+    assert.ok(!JSON.stringify(socketEvents).includes(deliveryInput.address));
+    assert.ok(!JSON.stringify(socketEvents).includes(protectedOrder.deliveryCode));
+
+    const wrong = trackingResult.deliveryCode === "000000000000" ? "FFFFFFFFFFFF" : "000000000000";
+    const rejectedCodes = await Promise.all(Array.from({ length: 5 }, () =>
+      call(statusPath, "PATCH", { state: "delivered", code: wrong }, assignedCourier)));
+    assert.deepEqual(rejectedCodes.map(response => response.status).sort(), [409, 409, 409, 409, 429]);
+    assert.equal((await call(statusPath, "PATCH", { state: "delivered", code: trackingResult.deliveryCode }, assignedCourier)).status, 429);
+    await Order.updateOne({ _id: deliveryId }, { deliveryCodeAttemptUntil: new Date(0) });
+    const delivered = await Promise.all(Array.from({ length: 2 }, () =>
+      call(statusPath, "PATCH", { state: "delivered", code: trackingResult.deliveryCode }, assignedCourier)));
+    assert.deepEqual(delivered.map(response => response.status).sort(), [200, 409]);
+    assert.equal((await call(gpsPath, "PATCH", zone.center, assignedCourier)).status, 409);
+    const terminalOrder = await (await call("/delivery/orders/" + deliveryId, "GET", null, delivery.orderToken)).json();
+    assert.equal(terminalOrder.tracking, undefined);
+    assert.equal(terminalOrder.deliveryCode, undefined);
+    const history = await (await call(runnerPath, "GET", null, assignedCourier)).json();
+    assert.equal(history.delivered, 1);
+    assert.equal(history.orders[0].contact, undefined);
+    const cancelledId = waiting.order._id;
+    assert.equal((await call("/delivery/admin/orders/" + cancelledId + "/assign", "PATCH",
+      { courierId: profiles[firstIndex]._id, revision: 0 }, stagingAdmin)).status, 200);
+    const cancelledState = runnerPath + "/" + cancelledId + "/state";
+    const cancelledGps = runnerPath + "/" + cancelledId + "/gps";
+    assert.equal((await call(cancelledState, "PATCH", { state: "accepted" }, otherCourier)).status, 200);
+    for (const status of ["preparing", "ready"]) {
+      assert.equal((await call("/orders/" + cancelledId + "/status", "PATCH", { status }, stagingAdmin)).status, 200);
+    }
+    for (const state of ["picked_up", "en_route"]) assert.equal((await call(cancelledState, "PATCH", { state }, otherCourier)).status, 200);
+    assert.equal((await call(cancelledGps, "PATCH", zone.center, otherCourier)).status, 204);
+    assert.equal((await call("/delivery/orders/" + cancelledId + "/cancel", "PATCH", null, stagingAdmin)).status, 200);
+    assert.equal((await call(cancelledGps, "PATCH", zone.center, otherCourier)).status, 409);
+    const afterCancel = await (await call("/delivery/orders/" + cancelledId, "GET", null, waiting.orderToken)).json();
+    assert.equal(afterCancel.tracking, undefined);
+    assert.equal(afterCancel.destination, undefined);
+    const cleared = await Order.findById(cancelledId).select("+deliveryGps +deliveryContact");
+    assert.equal(cleared.deliveryGps, undefined);
+    assert.equal(cleared.deliveryContact, undefined);
+    const revised = { name: "Synthetic Courier", username: "courier-revised", password: crypto.randomBytes(18).toString("hex") };
+    assert.equal((await call(couriersPath + "/" + profiles[firstIndex]._id, "PUT", revised, stagingAdmin)).status, 200);
+    assert.equal((await call(runnerPath, "GET", null, otherCourier)).status, 403);
+    assert.equal((await call("/delivery/courier/login", "POST", revised)).status, 200);
+    assert.equal((await call(couriersPath + "/" + profiles[winnerIndex]._id, "DELETE", null, stagingAdmin)).status, 204);
+    assert.equal((await call(runnerPath, "GET", null, assignedCourier)).status, 403);
   } finally {
     if (server) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
     await mongoose.disconnect();

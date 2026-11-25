@@ -151,16 +151,18 @@ router.patch("/:id/preparation-time", (req, res, next) => {
     if (!/^[a-f0-9]{24}$/i.test(req.params.id)) return res.status(400).json({ code: "invalid_order" });
     const estimate = preparationEstimate(req.body?.minutes, orderNow(req));
     const allowPickup = pickupEnabled() && req.app.get("pickupReady");
+    const allowDelivery = process.env.DELIVERY_ENABLED === "true" && req.app.get("deliveryReady");
+    const blockedChannels = [...(!allowPickup ? ["pickup"] : []), ...(!allowDelivery ? ["delivery"] : [])];
     const order = await Order.findOneAndUpdate({
       _id: req.params.id,
       status: { $in: activePreparationStatuses },
-      ...(!allowPickup && { channel: { $ne: "pickup" } }),
+      ...(blockedChannels.length && { channel: { $nin: blockedChannels } }),
     }, { $set: estimate }, { new: true });
     if (!order) return res.status(409).json({ code: "order_not_in_preparation" });
     const pickup = order.channel === "pickup";
     const view = pickup ? pickupOrderView(order) : order;
     const io = req.app.get("io");
-    io?.to(pickup ? ["admin", "kitchen"] : ["admin", "kitchen", "waiter"]).emit("order:updated", view);
+    io?.to(pickup || order.channel === "delivery" ? ["admin", "kitchen"] : ["admin", "kitchen", "waiter"]).emit("order:updated", view);
     io?.to("order:" + order._id).emit("order:estimate-updated", { orderId: String(order._id) });
     res.json(view);
   } catch (error) {
@@ -186,7 +188,7 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
 
     // Keep the existing QR status update atomic and route Pickup through its own transitions.
     let changed = await Order.findOneAndUpdate(
-      { _id: req.params.id, channel: { $ne: "pickup" }, status: { $ne: status } },
+      { _id: req.params.id, channel: { $nin: ["pickup", "delivery"] }, status: { $ne: status } },
       { status },
       { new: true },
     );
@@ -203,6 +205,16 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
       );
       if (!changed) return res.status(409).json({ message: "Pickup status changed" });
     }
+    if (current?.channel === "delivery") {
+      if (process.env.APP_ENV !== "staging" || process.env.DELIVERY_ENABLED !== "true" || !req.app.get("deliveryReady")) return res.sendStatus(404);
+      if (status === current.status) return res.json(current);
+      const next = { pending: "preparing", preparing: "ready" };
+      if (next[current.status] !== status) return res.status(409).json({ code: "invalid_transition" });
+      changed = await Order.findOneAndUpdate({
+        _id: req.params.id, channel: "delivery", status: current.status,
+      }, { $set: { status } }, { new: true });
+      if (!changed) return res.status(409).json({ code: "conflict" });
+    }
     const order = changed || current;
 
     if (!order) {
@@ -213,7 +225,7 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       const pickup = order.channel === "pickup";
-      const staff = pickup ? ["admin", "kitchen"] : ["admin", "kitchen", "waiter"];
+      const staff = pickup || order.channel === "delivery" ? ["admin", "kitchen"] : ["admin", "kitchen", "waiter"];
       const eventOrder = pickup ? pickupOrderView(order) : order;
       io.to(staff).emit("order:updated", eventOrder);
       io.to(staff).emit("order-updated", eventOrder);
@@ -231,7 +243,7 @@ router.patch("/:id/cancel", requireOrderAccess, async (req, res) => {
   try {
     const order = await Order.findOneAndUpdate(
       { _id: req.params.id, status: "pending",
-        ...(!pickupEnabled() || !req.app.get("pickupReady") ? { channel: { $ne: "pickup" } } : {}) },
+        channel: { $nin: !pickupEnabled() || !req.app.get("pickupReady") ? ["delivery", "pickup"] : ["delivery"] } },
       { $set: { status: "cancelled" }, $unset: { pickupContact: 1 } },
       { new: true }
     );
@@ -243,7 +255,7 @@ router.patch("/:id/cancel", requireOrderAccess, async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       const pickup = order.channel === "pickup";
-      const staff = pickup ? ["admin", "kitchen"] : ["admin", "kitchen", "waiter"];
+      const staff = pickup || order.channel === "delivery" ? ["admin", "kitchen"] : ["admin", "kitchen", "waiter"];
       const eventOrder = pickup ? pickupOrderView(order) : order;
       io.to(staff).emit("order:updated", eventOrder);
       io.to(staff).emit("order-updated", eventOrder);

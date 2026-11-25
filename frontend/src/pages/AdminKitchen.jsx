@@ -1,3 +1,5 @@
+import { deliveryEnabled } from "../config/delivery";
+import { deliveryLabel } from "../i18n/delivery";
 import { smartKitchenEnabled } from "../config/kitchen";
 import PreparationEstimate from "../components/PreparationEstimate";
 import { kitchenLabel } from "../i18n/kitchen";
@@ -46,10 +48,11 @@ export default function AdminKitchen() {
         {orders.length ? orders.map(order => {
           const wait = kitchenWait(order.createdAt, now);
           const pickup = pickupEnabled && order.channel === "pickup";
-          const next = pickup && status === "ready" ? null : KITCHEN_NEXT[status];
-          const secondary = Object.keys(KITCHEN_ACTIONS).filter(target => !pickup && target !== status && target !== next);
+          const delivery = deliveryEnabled && order.channel === "delivery";
+          const next = (pickup || delivery) && status === "ready" ? null : KITCHEN_NEXT[status];
+          const secondary = Object.keys(KITCHEN_ACTIONS).filter(target => !pickup && !delivery && target !== status && target !== next);
           return <article className={"pos-panel pos-kitchen-card pos-kitchen-card--" + status} key={order._id}>
-            <div className="pos-panel-heading"><div><h3>{pickup ? pickupLabel(language, "title") : "Стол №" + order.tableNumber}</h3><p>№{String(order._id).slice(-6).toUpperCase()}</p></div><Icon name="clock" size={17} /></div>
+            <div className="pos-panel-heading"><div><h3>{delivery ? deliveryLabel(language, "delivery") : pickup ? pickupLabel(language, "title") : "Стол №" + order.tableNumber}</h3><p>№{String(order._id).slice(-6).toUpperCase()}</p></div><Icon name="clock" size={17} /></div>
             {pickup && !order.scheduledFor && <p>{kitchenLabel(language, "asap")}</p>}
             <time className="pos-order-time" dateTime={pickup && order.scheduledFor ? order.scheduledFor : order.createdAt}>{formatDate(pickup && order.scheduledFor ? order.scheduledFor : order.createdAt)}</time>
             {wait && <span className={"pos-wait-time pos-wait-time--" + wait.level}><Icon name="clock" size={14} />{wait.minutes} мүнөт күттү{wait.level === "urgent" && " · Көптөн күтүлүүдө"}</span>}

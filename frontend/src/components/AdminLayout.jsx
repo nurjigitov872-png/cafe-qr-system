@@ -1,3 +1,5 @@
+import { deliveryEnabled } from "../config/delivery";
+import { deliveryLabel } from "../i18n/delivery";
 import { reservationsEnabled } from "../config/reservations";
 import { reservationLabel } from "../i18n/reservations";
 import useCustomerPreferences from "../i18n/useCustomerPreferences";
@@ -15,7 +17,9 @@ const links = [
 ];
 export default function AdminLayout({ title, subtitle, actions, children }) {
   const { language } = useCustomerPreferences();
-  const navLinks = reservationsEnabled ? [...links, ["reservations", reservationLabel(language, "calendar"), "qr"]] : links;
+  const navLinks = [...links];
+  if (reservationsEnabled) navLinks.push(["reservations", reservationLabel(language, "calendar"), "qr"]);
+  if (deliveryEnabled) navLinks.push(["logistics", deliveryLabel(language, "logistics"), "orders"]);
   const location = useLocation(), navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [mobile, setMobile] = useState(() => window.matchMedia("(max-width: 700px)").matches);

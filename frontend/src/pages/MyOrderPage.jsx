@@ -1,3 +1,4 @@
+import { deliveryEnabled } from "../config/delivery";
 import { smartKitchenEnabled } from "../config/kitchen";
 import { kitchenLabel } from "../i18n/kitchen";
 import { bookingTime } from "../services/reservations";
@@ -6,7 +7,7 @@ import { pickupEnabled } from "../config/pickup";
 import useCustomerPreferences from "../i18n/useCustomerPreferences";
 import { localizedField } from "../i18n/customer";
 import React, { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { cancelOrder, getOrderById } from "../services/api";
 import { CafeEmpty, CafeFrame, CafeIcon, CUSTOMER_STATUSES, CUSTOMER_PAYMENTS } from "../components/CustomerUI";
 import "../utils/customerData";
@@ -73,6 +74,7 @@ export default function MyOrderPage({
   const table = order?.tableNumber || localStorage.getItem("lastOrderTable") || 1;
   const pickup = pickupEnabled && order?.channel === "pickup";
   const pickupPath = pickup ? "/pickup" : undefined;
+  if (deliveryEnabled && order?.channel === "delivery") return <Navigate to={"/delivery/order/" + orderId} replace />;
   return <CafeFrame table={table} menuPath={pickupPath}><section className="cafe-result-card cafe-tracking"><span className="cafe-eyebrow">{t("СИЗДИН ЗАКАЗ")}</span><h1>{paymentReturn ? t("Заказ жана төлөм") : t("Менин заказым")}</h1>{loading && <p className="cafe-menu-loading" role="status"><span className="cafe-spinner" />{t("Маалымат жүктөлүүдө…")}</p>}{error && <div className="cafe-alert" role="alert">{t(error)}</div>}{!orderId && <CafeEmpty title={t("Заказ табылган жок")} detail={t("Менюдан товар тандап, заказ берсеңиз болот.")} />}{order && <><div className="cafe-tracking-header"><span>№{String(order._id).slice(-6).toUpperCase()} · {pickup ? pickupLabel(language, "title") : t("Стол") + " №" + order.tableNumber}</span><span className={"cafe-status cafe-status-" + order.status}>{t(CUSTOMER_STATUSES[order.status] || t("Статус белгисиз"))}</span></div>{pickup && <p>{order.scheduledFor
             ? <>{pickupLabel(language, "time")} · {new Intl.DateTimeFormat(language, { timeZone: "Asia/Bishkek", dateStyle: "medium" }).format(new Date(order.scheduledFor))} · {bookingTime(order.scheduledFor, language)} (UTC+6)</>
             : kitchenLabel(language, "asap")}</p>}
